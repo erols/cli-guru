@@ -109,5 +109,72 @@ class DebugTestCase(unittest.TestCase):
         self.assertNotIn("some reasoning", out)
 
 
+class _Tty(io.StringIO):
+    """Stands in for /dev/tty. Keeps its buffer readable after the with-block."""
+
+    def close(self):  # noqa: D102 - deliberately does not discard the buffer
+        pass
+
+
+class EmptyAskTestCase(unittest.TestCase):
+    """An empty `ask` must not prompt on stdout.
+
+    stdout IS the readline buffer — the widget runs `out=$(cli-guru ask ...)` —
+    so a prompt written there is swallowed by the capture and the terminal hangs
+    on input the user cannot see they owe. Found by pressing the key on an empty
+    line at a real prompt.
+    """
+
+    def _fake_tty(self, answer="list files by size"):
+        self.opened = []
+        self.writer, self.reader = _Tty(), _Tty(answer + "\n")
+
+        def fake_open(path, mode="r", *a, **k):
+            self.opened.append((str(path), mode))
+            return self.writer if "w" in mode else self.reader
+
+        return fake_open
+
+    def test_prompt_goes_to_the_terminal_never_to_stdout(self):
+        out = io.StringIO()  # not a tty, exactly like the widget's capture
+        with redirect_stdout(out), mock.patch("builtins.open", self._fake_tty()):
+            got = cli._read_question()
+        self.assertEqual(got, "list files by size")
+        self.assertEqual(out.getvalue(), "", "prompt leaked into the readline buffer")
+        self.assertIn("cli-guru>", self.writer.getvalue())
+
+    def test_tty_is_not_opened_read_write(self):
+        """`open("/dev/tty", "r+")` raises UnsupportedOperation — a character
+        device is not seekable — and that subclasses OSError, so it would be
+        caught and silently look like "no terminal"."""
+        out = io.StringIO()
+        with redirect_stdout(out), mock.patch("builtins.open", self._fake_tty()):
+            cli._read_question()
+        self.assertTrue(self.opened, "never opened the terminal")
+        for path, mode in self.opened:
+            self.assertEqual(path, "/dev/tty")
+            self.assertNotIn("+", mode, f"opened /dev/tty as {mode!r}; must not be read-write")
+
+    def test_no_terminal_reports_instead_of_blocking(self):
+        out = io.StringIO()
+        with redirect_stdout(out), mock.patch("builtins.open", side_effect=OSError("no tty")):
+            self.assertIsNone(cli._read_question())
+
+    def test_direct_use_with_a_tty_uses_plain_input(self):
+        """Run straight from a shell, stdout is the terminal and input() is fine."""
+        with mock.patch.object(cli.sys, "stdout") as fake_stdout, \
+                mock.patch.object(cli, "input", create=True, return_value="  ls -la  "):
+            fake_stdout.isatty.return_value = True
+            self.assertEqual(cli._read_question(), "ls -la")
+
+    def test_unanswerable_ask_exits_1_with_empty_stdout(self):
+        """The widget keys off empty stdout, so the user's line is left alone."""
+        with mock.patch.object(cli, "_read_question", return_value=None):
+            code, out, err = run(["ask"])
+        self.assertEqual(code, 1)
+        self.assertEqual(out, "")
+        self.assertIn("type your question on the line first", err)
+
+
 if __name__ == "__main__":
     unittest.main()

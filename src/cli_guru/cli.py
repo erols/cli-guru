@@ -39,13 +39,46 @@ def _joined(parts: List[str]) -> str:
     return " ".join(parts).strip()
 
 
+def _read_question() -> Optional[str]:
+    """Ask for a question interactively, NEVER writing the prompt to stdout.
+
+    stdout is the readline buffer: the shell widget runs this as `out=$(...)`,
+    so a prompt printed there is swallowed by the capture and the terminal
+    appears to hang, blocked on input the user cannot see they owe. stderr is no
+    better — the adapter redirects it to a temp file and only prints it after
+    the command exits. The controlling terminal is the only channel the user is
+    actually looking at, so ask there.
+
+    Returns None when there is no terminal to ask on, so the caller can say so
+    instead of blocking forever.
+    """
+    if sys.stdout.isatty():
+        try:
+            return input("cli-guru> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            return ""
+    try:
+        # Two handles, not one "r+": /dev/tty is a character device and is not
+        # seekable, so r+ raises io.UnsupportedOperation (an OSError subclass,
+        # so it would be swallowed below and look like "no terminal").
+        # No /dev/tty on Windows, and none in a container or some ssh/tmux
+        # sessions; OSError there means "cannot ask", not "user said nothing".
+        with open("/dev/tty", "w") as tty_out, open("/dev/tty", "r") as tty_in:
+            tty_out.write("cli-guru> ")
+            tty_out.flush()
+            return (tty_in.readline() or "").strip()
+    except (OSError, KeyboardInterrupt):
+        return None
+
+
 def cmd_ask(args, cfg) -> int:
     question = _joined(args.text)
     if not question:
-        try:
-            question = input("cli-guru> ").strip()
-        except (EOFError, KeyboardInterrupt):
+        typed = _read_question()
+        if typed is None:
+            _err("nothing to ask — type your question on the line first, then press the key")
             return 1
+        question = typed
     if not question:
         return 1
 

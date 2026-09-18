@@ -254,6 +254,14 @@ Non-obvious constraints:
 - **Failure must be silent and non-destructive.** Ollama down, timeout, empty response → return
   without touching `READLINE_LINE`. Never clobber what the user typed.
 - Empty `READLINE_LINE` → prompt interactively on `/dev/tty` rather than asking the model nothing.
+  **That prompt must be written to `/dev/tty` itself, never to stdout or stderr.** stdout is the
+  readline buffer, captured by `out=$(...)`, so a prompt printed there is swallowed and the terminal
+  hangs on input the user cannot see they owe — observed at a real prompt, and it looks exactly like
+  a crash. stderr is no better: the adapter redirects it to a temp file and prints it only after the
+  command exits. Open `/dev/tty` as **two handles (`"w"` and `"r"`), never `"r+"`** — a character
+  device is not seekable, so `r+` raises `io.UnsupportedOperation`, which subclasses `OSError` and
+  therefore gets swallowed by the "no terminal" branch, silently disabling the prompt everywhere.
+  When `/dev/tty` genuinely cannot be opened, say so on stderr and exit 1; never block.
 - **Two bindings, never a heuristic.** `Ctrl-X Ctrl-A` = ask, `Ctrl-X Ctrl-H` = explain. Do not
   reintroduce auto-routing: "if the first word resolves via `command -v`, it's a command" was tested
   and misfires on most real input, because English requests start with verbs that are also coreutils
