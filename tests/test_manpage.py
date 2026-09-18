@@ -1,4 +1,5 @@
 import unittest
+from unittest import mock
 
 from cli_guru import manpage
 
@@ -84,6 +85,64 @@ class TestTruncate(unittest.TestCase):
 class TestOverstrike(unittest.TestCase):
     def test_strips_backspace_bolding(self):
         self.assertEqual(manpage._strip_overstrike("t\x08ta\x08ar\x08r"), "tar")
+
+
+class TestFetchDoesNotExecute(unittest.TestCase):
+    """explain must not run the command it was asked to explain.
+
+    You reach for explain BEFORE running something — the "I pasted this from
+    the internet" case — so a docs fallback that executes it inverts the point.
+    No real subprocess runs here: `_run` is replaced with a recorder, which also
+    keeps the suite honest on hosts with no `man` at all.
+    """
+
+    def setUp(self):
+        self.calls = []
+
+        def recorder(cmd, timeout=5.0):
+            self.calls.append(list(cmd))
+            return None  # nothing yields docs, so every fallback is attempted
+
+        self._patches = [
+            mock.patch.object(manpage, "_run", recorder),
+            mock.patch.object(manpage.shutil, "which", lambda c: "/usr/bin/" + c),
+            mock.patch.object(manpage.platform, "system", lambda: "Linux"),
+        ]
+        for pat in self._patches:
+            pat.start()
+            self.addCleanup(pat.stop)
+
+    def test_default_never_invokes_the_command(self):
+        text, source = manpage.fetch("frobnicate")
+        self.assertIsNone(text)
+        self.assertEqual(source, "none")
+        self.assertEqual(self.calls, [["man", "frobnicate"]])
+
+    def test_default_does_not_invoke_subcommand_tools_either(self):
+        manpage.fetch("git", "commit")
+        for call in self.calls:
+            self.assertEqual(call[0], "man", f"executed the command: {call}")
+
+    def test_run_help_is_opt_in(self):
+        manpage.fetch("frobnicate", run_help=True)
+        self.assertIn(["frobnicate", "--help"], self.calls)
+
+    def test_dash_h_is_never_used(self):
+        """`-h` is not universally help: `shutdown -h` halts, BSD uses it for
+        "human readable" and "no-dereference"."""
+        manpage.fetch("frobnicate", run_help=True)
+        for call in self.calls:
+            self.assertNotIn("-h", call, f"used -h: {call}")
+
+    def test_man_still_preferred_over_help(self):
+        with mock.patch.object(manpage, "_run", lambda cmd, timeout=5.0: "MAN TEXT"):
+            text, source = manpage.fetch("tar", run_help=True)
+        self.assertEqual(text, "MAN TEXT")
+        self.assertEqual(source, "man tar")
+
+    def test_missing_command_is_reported_not_guessed(self):
+        """source 'none' is what makes cli.py say the answer is ungrounded."""
+        self.assertEqual(manpage.fetch("frobnicate")[1], "none")
 
 
 if __name__ == "__main__":

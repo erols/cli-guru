@@ -86,7 +86,9 @@ def cmd_explain(args, cfg) -> int:
         return 1
 
     cmd, sub = manpage.base_command(line)
-    doc, source = manpage.fetch(cmd, sub)
+    # Opt-in only: fetching docs must not execute the command under explanation.
+    run_help = bool(getattr(args, "run_help", False)) or bool(cfg.get("explain_run_help"))
+    doc, source = manpage.fetch(cmd, sub, run_help=run_help)
     if doc:
         doc = manpage.truncate(doc, int(cfg["max_man_chars"]))
 
@@ -212,6 +214,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_ask.set_defaults(func=cmd_ask)
 
     p_exp = sub.add_parser("explain", help="explain a command using its man page")
+    p_exp.add_argument("--run-help", action="store_true",
+                       help="if no man page exists, RUN `<cmd> --help` to get its docs")
     p_exp.add_argument("text", nargs=argparse.REMAINDER)
     p_exp.set_defaults(func=cmd_explain)
 

@@ -84,5 +84,91 @@ class TestDetection(unittest.TestCase):
         self.assertIsNone(danger.check("   "))
 
 
+# Every one of these was silently cleared before `check` judged each segment
+# separately: the line STARTS with a read-only command, and the _SAFE allowlist
+# then excused everything after the separator too. `sudo ls; rm -rf /` is the
+# one that shows why this mattered.
+CHAINED_DESTRUCTIVE = [
+    "echo hi; rm -rf /tmp/x",
+    "ls; rm -rf ~/Documents",
+    "cat /etc/hosts && rm -rf ~/Documents",
+    "grep -r foo . ; mkfs.ext4 /dev/sda",
+    "find . -name '*.log' -newer x; dd if=/dev/zero of=/dev/sda",
+    "df -h; git reset --hard",
+    "man ls; shred ~/.ssh/id_rsa",
+    "sudo ls; rm -rf /",
+    "ls || rm -rf ~/Documents",
+    "ls & rm -rf /tmp/x",
+    "ls; echo still safe; rm -rf /tmp/x",
+    "echo one\nrm -rf /tmp/x",
+    # Substitutions run too, including inside double quotes.
+    "ls $(rm -rf ~/Documents)",
+    "ls `rm -rf ~/Documents`",
+    "cat <(rm -rf x)",
+    'echo "expanded `rm -rf ~` here"',
+    'echo "expanded $(rm -rf ~) here"',
+]
+
+# A separator inside quotes is literal text, not a second command. Warning
+# fatigue is a real cost, so these must stay quiet.
+QUOTED_SAFE = [
+    'echo "a; rm -rf ~"',
+    "echo 'x && rm -rf /'",
+    "echo 'literal $(rm -rf ~)'",
+    'grep "foo|bar" file.txt',
+    "grep 'a; b' notes.md",
+]
+
+
+class TestChainedCommands(unittest.TestCase):
+    """A read-only command at the START of the line must not excuse the rest."""
+
+    def test_destructive_after_a_safe_prefix_is_flagged(self):
+        for cmd in CHAINED_DESTRUCTIVE:
+            with self.subTest(cmd=cmd):
+                self.assertIsNotNone(danger.check(cmd), f"missed: {cmd}")
+
+    def test_separators_inside_quotes_are_not_commands(self):
+        for cmd in QUOTED_SAFE:
+            with self.subTest(cmd=cmd):
+                self.assertIsNone(danger.check(cmd), f"false alarm: {cmd}")
+
+    def test_sudo_ls_does_not_excuse_rm_rf_root(self):
+        """The case that made this worth fixing."""
+        self.assertIsNone(danger.check("sudo ls"))
+        self.assertIsNotNone(danger.check("sudo ls; rm -rf /"))
+
+    def test_harm_reported_is_the_destructive_segment(self):
+        self.assertIn("recursively deletes", danger.check("ls -la; rm -rf ~/x"))
+
+    def test_single_quotes_suppress_substitution(self):
+        """Single quotes are literal in shell; double quotes are not."""
+        self.assertIsNone(danger.check("echo 'x $(rm -rf ~)'"))
+        self.assertIsNotNone(danger.check('echo "x $(rm -rf ~)"'))
+
+
+class TestSegments(unittest.TestCase):
+    def test_splits_on_each_separator(self):
+        self.assertEqual(danger.segments("a; b && c || d | e & f"),
+                         ["a", "b", "c", "d", "e", "f"])
+
+    def test_quoted_separator_is_not_a_split(self):
+        self.assertEqual(danger.segments('echo "a; b"'), ['echo "a; b"'])
+
+    def test_substitution_becomes_its_own_segment(self):
+        self.assertEqual(danger.segments("ls $(rm -rf ~)"), ["rm -rf ~", "ls"])
+
+    def test_nested_substitution(self):
+        self.assertEqual(danger.segments("a $(b $(c))"), ["c", "b", "a"])
+
+    def test_redirect_stays_with_its_command(self):
+        """`>` is part of a command, not a separator — the truncation rule needs it."""
+        self.assertEqual(danger.segments("echo x > f.txt"), ["echo x > f.txt"])
+
+    def test_empty_and_whitespace(self):
+        self.assertEqual(danger.segments(""), [])
+        self.assertEqual(danger.segments("  ;  ;  "), [])
+
+
 if __name__ == "__main__":
     unittest.main()

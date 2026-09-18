@@ -138,16 +138,29 @@ def truncate(text: str, limit: int) -> str:
     return result
 
 
-def fetch(cmd: str, sub: Optional[str] = None) -> Tuple[Optional[str], str]:
+def fetch(
+    cmd: str, sub: Optional[str] = None, *, run_help: bool = False
+) -> Tuple[Optional[str], str]:
     """Return (text, source). `source` names where it came from, for the prompt.
 
-    Falls back --help -> -h, and on Windows to Get-Help. When everything fails
-    the caller must SAY the answer is ungrounded rather than pretend otherwise.
+    Reads documentation; it does NOT run the command being explained. You ask
+    explain what a command does precisely because you have not run it yet — the
+    "I pasted this from the internet" case — so executing it to find out
+    inverts the whole point. `<cmd> --help` is therefore opt-in via `run_help`,
+    and `-h` is never used at all: it is not universally "help" (`shutdown -h`
+    halts; on BSD it commonly means "human readable" or "no-dereference").
+
+    The cost of the default is small and lands in the right place. `man` answers
+    for anything with a man page; the fallback only ever fired for commands
+    WITHOUT one, which are exactly the unknown third-party binaries where
+    running them is least acceptable. When nothing is found the caller must SAY
+    the answer is ungrounded rather than pretend otherwise.
     """
     if not cmd:
         return None, "none"
 
     if platform.system() == "Windows":
+        # Get-Help reads the help system; it does not invoke `cmd` itself.
         if shutil.which("powershell"):
             text = _run(["powershell", "-NoProfile", "-Command", f"Get-Help {cmd} -Full"])
             if text:
@@ -161,9 +174,8 @@ def fetch(cmd: str, sub: Optional[str] = None) -> Tuple[Optional[str], str]:
         if text:
             return text, f"man {cmd}"
 
-    if shutil.which(cmd) or platform.system() == "Windows":
-        for flag in ("--help", "-h"):
-            text = _run([cmd, flag], timeout=3.0)
-            if text:
-                return text, f"{cmd} {flag}"
+    if run_help and shutil.which(cmd):
+        text = _run([cmd, "--help"], timeout=3.0)
+        if text:
+            return text, f"{cmd} --help"
     return None, "none"

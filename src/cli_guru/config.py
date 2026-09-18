@@ -41,6 +41,10 @@ DEFAULTS: Dict[str, Any] = {
     # 12000 chars was ~3100 prompt tokens on a 4B model. 6000 keeps explain
     # responsive while still carrying the whole OPTIONS section for most tools.
     "max_man_chars": 6000,
+    # When no man page exists, fall back to running `<cmd> --help`. OFF by
+    # default: explain is what you reach for BEFORE running something, so it
+    # must not run it for you. Opt in only if you trust what you paste.
+    "explain_run_help": False,
 }
 
 _BOOL = {"true": True, "false": False, "yes": True, "no": False, "1": True, "0": False}

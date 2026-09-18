@@ -13,7 +13,7 @@ Two modes, nothing else:
 
 ## Status — read this first
 
-**Working and complete.** cliai is implemented, tested and verified end to end. 76 tests pass with
+**Working and complete.** cliai is implemented, tested and verified end to end. 93 tests pass with
 no network and no ollama: `PYTHONPATH=src python3 -m unittest discover -s tests`.
 
 ### Naming
@@ -77,7 +77,7 @@ sections below.
 ### Running things
 
 ```bash
-PYTHONPATH=src python3 -m unittest discover -s tests        # 76 tests, no ollama needed
+PYTHONPATH=src python3 -m unittest discover -s tests        # 93 tests, no ollama needed
 PYTHONPATH=src python3 -m cli_guru.cli check               # is ollama reachable
 OLLAMA_HOST=http://192.168.178.96:11434 python3 bench/eval_ask.py  qwen2.5-coder:1.5b 5
 OLLAMA_HOST=http://192.168.178.96:11434 python3 bench/eval_hard.py qwen2.5-coder:1.5b 5
@@ -364,10 +364,17 @@ Both modes use it: `explain` prints the banner above the explanation, and `ask` 
 buffer for review. If a model-authored WARNING line appears anyway, `cmd_explain` strips it to
 avoid a duplicate.
 
+**Judge each command, not each line.** `danger.segments()` splits on `;`, `&&`, `||`, `|`, `&`
+and newlines, and pulls `$(...)`, backticks and `<(...)` out as segments of their own; `check()`
+then judges each independently. Judging the whole line let the `_SAFE` prefix clear everything
+after a separator, so `sudo ls; rm -rf /` warned about nothing. Quoting is honoured the way a shell
+honours it: single quotes are literal, double quotes still expand substitutions.
+
 Rules live in `danger._RULES` with a `_SAFE` allowlist for read-only commands, and
-`_ALWAYS_UNSAFE` withdraws that allowlist when the line also deletes — `find . -exec rm {} +` is a
-delete wearing a read-only command's name. Every rule has a test; add both a destructive and a
-non-destructive case when adding one.
+`_ALWAYS_UNSAFE` withdraws that allowlist *within* a segment when it also deletes —
+`find . -exec rm {} +` is a delete wearing a read-only command's name. Every rule has a test; add
+both a destructive and a non-destructive case when adding one, and a chained case
+(`ls; <your command>`) for anything that could be hidden behind a safe prefix.
 
 ## Degenerate output
 
@@ -548,7 +555,15 @@ these rules:
 1. Extract the base command: skip `sudo`, `env`, `time`, and `VAR=value` prefixes; take the first
    real word. For subcommand tools (`git commit`, `docker run`) try `man git-commit` before `man git`
 2. `man <cmd> | col -b`, `LANG=C`, `MANWIDTH=80`, timeout 5s
-3. Fall back to `<cmd> --help`, then `<cmd> -h`
+3. **Never run the command being explained.** `<cmd> --help` is opt-in only
+   (`--run-help`, or `explain_run_help = true`), and `-h` is never used at all — it is not
+   universally "help" (`shutdown -h` halts; BSD uses it for "human readable" and
+   "no-dereference"). explain is what you reach for *before* running something, so a docs
+   fallback that executes it inverts the point. The cost is small and lands correctly: `man`
+   covers anything with a man page, so the fallback only ever fired for commands *without* one —
+   exactly the unknown third-party binaries where running them is least acceptable. Note this
+   makes explain ungrounded for native Windows executables and inside container images with no
+   `man` installed
 4. If both fail, say so in the output and answer from model knowledge with that caveat stated —
    do not pretend it was grounded
 5. Truncate to `max_man_chars` (default ~12000) — **keep the OPTIONS/FLAGS section**, drop
@@ -568,6 +583,7 @@ timeout = 20                  # seconds; a keypress must not hang the prompt
 history_lines = 10
 max_files = 50
 max_man_chars = 12000
+explain_run_help = false      # true lets explain RUN `<cmd> --help` when no man page exists
 ```
 
 Precedence: CLI flag > env (`CLIAI_MODEL`, `OLLAMA_HOST`) > config file > default.

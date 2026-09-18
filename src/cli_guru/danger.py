@@ -51,23 +51,120 @@ _SAFE = re.compile(
     r"(?:ls|ll|cat|less|more|head|tail|grep|rg|find|df|du|ps|top|"
     r"git\s+(?:log|status|diff|show|branch)|tar\s+-[a-zA-Z]*t|echo|printf|which|man)\b"
 )
+# Withdraws the _SAFE exemption WITHIN a single segment: `find . -exec rm {} +`
+# starts with an allowlisted command but is a delete. Cross-command cases like
+# `ls; rm -rf ~` are handled by segmenting instead, not here.
 _ALWAYS_UNSAFE = re.compile(
     r">(?!>)\s*(?!/dev/null)|(?<![\w-])-delete\b|-exec\s+(?:rm|shred|truncate)\b|"
-    r"\|\s*xargs\s+(?:-[^|]*\s+)?(?:rm|shred)\b"
+    r"\bxargs\s+(?:-\S+\s+)*(?:rm|shred)\b"
 )
+
+# Separators that end one command and begin another. `>` is deliberately absent:
+# a redirect is part of the command it belongs to.
+_SEPARATORS = ";\n&|"
+
+
+def _read_substitution(line: str, start: int, closer: str) -> Tuple[str, int]:
+    """Read a command substitution body, returning (body, index after closer)."""
+    depth = 1
+    out: List[str] = []
+    i = start
+    while i < len(line):
+        ch = line[i]
+        if closer == ")" and ch == "(":
+            depth += 1
+        elif ch == closer:
+            depth -= 1
+            if depth == 0:
+                return "".join(out), i + 1
+        out.append(ch)
+        i += 1
+    return "".join(out), i
+
+
+def segments(line: str) -> List[str]:
+    """Split a command line into independently-judged commands.
+
+    A warning must never be suppressed because the line merely *starts* with
+    something read-only: `sudo ls; rm -rf /` is a delete, and judging the line
+    as a whole silently cleared it. Substitutions are judged too, so the `rm` in
+    `ls $(rm -rf ~)` is seen. Quoted text is never split, so `echo "a; b"` stays
+    one command.
+    """
+    out: List[str] = []
+    buf: List[str] = []
+    quote = ""
+    i, n = 0, len(line)
+    while i < n:
+        ch = line[i]
+        # Single quotes are literal in shell: nothing expands inside them.
+        if quote == "'":
+            if ch == quote:
+                quote = ""
+            buf.append(ch)
+            i += 1
+            continue
+        if ch == "\\" and i + 1 < n:
+            buf.append(ch)
+            buf.append(line[i + 1])
+            i += 2
+            continue
+        # Substitutions expand even inside double quotes, so these are checked
+        # before the quote state: `echo "`rm -rf ~`"` really does delete.
+        if ch == "`":
+            body, i = _read_substitution(line, i + 1, "`")
+            out.extend(segments(body))
+            continue
+        if ch in "$<>" and i + 1 < n and line[i + 1] == "(":
+            body, i = _read_substitution(line, i + 2, ")")
+            out.extend(segments(body))
+            continue
+        if quote == '"':
+            if ch == quote:
+                quote = ""
+            buf.append(ch)
+            i += 1
+            continue
+        if ch in "'\"":
+            quote = ch
+            buf.append(ch)
+            i += 1
+            continue
+        if ch in _SEPARATORS:
+            out.append("".join(buf))
+            buf = []
+            i += 2 if i + 1 < n and line[i + 1] == ch else 1  # && and || are one separator
+            continue
+        buf.append(ch)
+        i += 1
+    out.append("".join(buf))
+    return [s.strip() for s in out if s.strip()]
+
+
+def _check_segment(segment: str) -> Optional[str]:
+    for pattern, harm in _RULES:
+        if not pattern.search(segment):
+            continue
+        # A read-only command that merely contains a scary word is not a risk,
+        # but a redirect or an explicit delete always is. Keep looking rather
+        # than clearing the segment: an exemption earned against one rule must
+        # not mask a different rule that also fires.
+        if _SAFE.match(segment) and not _ALWAYS_UNSAFE.search(segment):
+            continue
+        return harm
+    return None
 
 
 def check(command: str) -> Optional[str]:
-    """Return a warning sentence for a destructive command, else None."""
+    """Return a warning sentence for a destructive command, else None.
+
+    Every segment of the line is judged separately — see `segments`.
+    """
     if not command or not command.strip():
         return None
-    line = command.strip()
-    for pattern, harm in _RULES:
-        if pattern.search(line):
-            # A read-only command that merely contains a scary word is not a risk,
-            # but a redirect or an explicit delete always is.
-            if _SAFE.match(line) and not _ALWAYS_UNSAFE.search(line):
-                return None
+    for segment in segments(command):
+        harm = _check_segment(segment)
+        if harm:
             return harm
     return None
 
