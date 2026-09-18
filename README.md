@@ -309,9 +309,45 @@ To install without cloning first:
 pipx install git+https://github.com/erols/cli-guru
 ```
 
-Upgrading later means `git pull` in the clone and re-running the install command
-(or `pipx reinstall cli-guru`). Once this is published, `pipx install cli-guru`
-will be the one-liner and this section shrinks to it.
+### Updating
+
+```bash
+git -C ~/PROJECTS/cli-guru pull          # wherever your clone lives
+pipx install --force ~/PROJECTS/cli-guru
+cli-guru install                         # idempotent — refreshes the rc block
+exec bash -l                             # or open a new terminal
+```
+
+`pipx upgrade` does nothing useful here: there is no index to upgrade *from*
+until this is published. `pipx reinstall cli-guru` also works — it replays the
+path it recorded at install time — but `--force` with the path written out
+leaves no doubt about which source was used.
+
+**Why `cli-guru install` again.** The rc block holds the adapter's absolute
+path, which lives inside the pipx virtualenv and carries the Python version in
+it:
+
+```
+~/.local/share/pipx/venvs/cli-guru/lib/python3.12/site-packages/cli_guru/shell/cli-guru.bash
+```
+
+An ordinary update keeps that path, so the block stays valid and picks up the
+new adapter for free. But when Python moves to a new minor version, pipx
+rebuilds the venv somewhere else and the block points at a file that is no
+longer there. The adapter is loaded with `[ -f "$script" ] && . "$script"`, so
+that failure is **silent** — your keys simply stop working, with no message.
+Re-running `cli-guru install` costs nothing and forecloses it. `grep cli-guru
+~/.bashrc` shows the path currently recorded.
+
+Confirm the update landed:
+
+```bash
+cli-guru --version
+bind -X | grep cli_guru      # in a NEW shell: expect the two bindings
+```
+
+Once this is on PyPI, updating becomes `pipx upgrade cli-guru` and this section
+shrinks to that.
 
 Check that everything is wired up before going further:
 

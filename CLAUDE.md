@@ -565,8 +565,21 @@ Branch on `platform.system()`, never on "is there a `/etc`":
 
 Shipped as a standard Python package: `pyproject.toml`, console entry point
 `cli-guru = "cli_guru.cli:main"`. Until it is on PyPI, installation is from a clone
-(`pipx install .`) or `pipx install git+https://github.com/erols/cli-guru` — see *Not done / open
-items*.
+(`pipx install ./cli-guru`) or `pipx install git+https://github.com/erols/cli-guru` — see
+*Not done / open items*.
+
+**`cli_guru.__version__` is the single source of truth.** `pyproject.toml` declares
+`dynamic = ["version"]` and reads that attribute, so the CLI and the installed distribution cannot
+disagree about what is running. Bump it for anything a user could notice: the version is the only
+way someone reporting a bug can tell you which build they have, and it sat at `0.1.0` across a
+rename and a set of security fixes, which made "did my update land?" unanswerable.
+
+**Updating an install is not just a reinstall.** `cli-guru install` writes the adapter's absolute
+path into the rc file, and that path runs through the pipx venv and carries the Python minor
+version (`.../venvs/cli-guru/lib/python3.12/site-packages/cli_guru/shell/...`). A same-Python
+update keeps it valid, but a Python upgrade moves the venv and the block then sources a file that
+no longer exists — silently, because the adapter is loaded with `[ -f ... ] && . ...`. Re-run
+`cli-guru install` after updating; it is idempotent and costs nothing.
 
 Once there are modules, the layout is `src/cli_guru/` with `cli.py`, `context.py`, `backend.py`,
 `manpage.py`, `prompts.py`. Keep the single file until it earns the split.

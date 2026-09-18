@@ -4,7 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cli-guru"
-version = "0.1.0"
+# Single source of truth is cli_guru.__version__, so `cli-guru --version` and
+# the installed distribution can never disagree about what you are running.
+dynamic = ["version"]
 description = "Plain-language shell commands and man-page explanations from a local ollama model."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -26,6 +28,9 @@ cli-guru = "cli_guru.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/erols/cli-guru"
+
+[tool.setuptools.dynamic]
+version = { attr = "cli_guru.__version__" }
 
 [tool.setuptools]
 package-dir = { "" = "src" }
