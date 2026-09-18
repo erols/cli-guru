@@ -13,11 +13,23 @@ requires-python = ">=3.9"
 license = { text = "MIT" }
 keywords = ["shell", "cli", "ollama", "llm", "readline"]
 classifiers = [
+  "Development Status :: 4 - Beta",
   "Environment :: Console",
   "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
   "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: Microsoft :: Windows",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3 :: Only",
   "Topic :: Utilities",
+  "Topic :: System :: Shells",
 ]
 # No runtime dependencies, on purpose: startup latency is paid on every keypress.
 # See CLAUDE.md "Dependencies - why plain Python, not LangChain".
@@ -28,6 +40,8 @@ cli-guru = "cli_guru.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/erols/cli-guru"
+Source = "https://github.com/erols/cli-guru"
+Issues = "https://github.com/erols/cli-guru/issues"
 
 [tool.setuptools.dynamic]
 version = { attr = "cli_guru.__version__" }

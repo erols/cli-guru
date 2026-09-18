@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="logo/lockup-dark-matched.png">
-  <img src="logo/lockup-light-matched.png" alt="cli-guru" width="320">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/erols/cli-guru/main/logo/lockup-dark-matched.png">
+  <img src="https://raw.githubusercontent.com/erols/cli-guru/main/logo/lockup-light-matched.png" alt="cli-guru" width="320">
 </picture>
 
 **Plain-language shell commands, at your prompt. Running on your own machine.**
@@ -76,6 +76,12 @@ costs you two seconds rather than a restore from backup.
 | **OS** | Linux, macOS, Windows |
 | **[ollama](https://ollama.com)** | running locally, with one model pulled |
 | **Python packages** | none — cli-guru is stdlib-only by design |
+
+> **Verified so far on Linux + bash only.** The zsh and PowerShell adapters are
+> written to the same contract and are covered by the test suite, but neither has
+> been exercised on a real macOS or Windows box yet. If you are on one of those
+> and something misbehaves, that is worth an issue — it is more likely to be a
+> real gap than something you did.
 
 > cli-guru starts on every keypress, so it has no dependencies to import. The
 > whole model client is ~40 lines of `urllib.request`.
