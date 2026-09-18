@@ -70,8 +70,18 @@ sections below.
   shell exists in the dev sandbox. Test on a Mac and a Windows box before claiming support.
 - **Not a git repository.** `git init` is needed before `/ultrareview` or any PR workflow will run.
   A `.gitignore` is already in place.
-- **Not published.** `pipx install cli-guru` in the README is aspirational; the package has never been
-  built or uploaded, and the GitHub URLs in `pyproject.toml` / README are placeholders.
+- **Not published.** `cli-guru` is unregistered on PyPI. The README no longer pretends otherwise:
+  it documents clone-and-install (`pipx install .`) and says publication is pending, so nothing in
+  it is aspirational any more. The GitHub URLs in `pyproject.toml` / README are still unverified.
+  - **`cliai` on PyPI is someone else's package** — version 0.2.9 by "Baksi Li", unrelated to this
+    project. The pre-rename README told readers to `pipx install cliai`, which would have installed
+    a stranger's code under this tool's name. Checked 2026-09-18. A second reason the rename was
+    worth doing, and a reason to register `cli-guru` before advertising it anywhere.
+  - **The package builds and the adapters ship.** Built for the first time on 2026-09-18:
+    `cli_guru/shell/cli-guru.{bash,zsh,ps1}` land beside the modules, which is what `install.py`'s
+    `__file__`-relative lookup needs. Verified via `setuptools build_py`; a full `pipx install`
+    round trip has NOT been run (no pipx/pip/uv in the dev sandbox), so do that once on a real
+    machine before telling anyone else to.
 - **Compound requests fail on every model tested** — "listening ports *with process names*" reliably
   drops the `-p`. Possibly improvable by splitting the request; not attempted.
 - `bench/eval_explain.py` still scores the *model's* ability to spot destructive commands. That is
@@ -525,7 +535,9 @@ Branch on `platform.system()`, never on "is there a `/etc`":
 ## Packaging & install
 
 Shipped as a standard Python package: `pyproject.toml`, console entry point
-`cli-guru = "cli_guru.cli:main"`, installed with `pipx install cli-guru` or `uv tool install cli-guru`.
+`cli-guru = "cli_guru.cli:main"`. Until it is on PyPI, installation is from a clone
+(`pipx install .`) or `pipx install git+https://github.com/erols/cli-guru` — see *Not done / open
+items*.
 
 Once there are modules, the layout is `src/cli_guru/` with `cli.py`, `context.py`, `backend.py`,
 `manpage.py`, `prompts.py`. Keep the single file until it earns the split.

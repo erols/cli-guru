@@ -82,11 +82,11 @@ costs you two seconds rather than a restore from backup.
 
 ## Quick start
 
-Already have ollama running? Four commands:
+Already have ollama running? Four steps:
 
 ```bash
 ollama pull qwen2.5-coder:1.5b
-pipx install cli-guru
+git clone https://github.com/erols/cli-guru && pipx install ./cli-guru
 cli-guru check          # confirms ollama is reachable and the model is present
 cli-guru install        # adds the keybindings to your shell
 ```
@@ -275,13 +275,32 @@ The server must be listening beyond loopback for that to work
 
 # Installing cli-guru
 
+cli-guru is **not on PyPI yet**, so install it from a clone:
+
 ```bash
-pipx install cli-guru          # recommended — isolated, and puts cli-guru on PATH
+git clone https://github.com/erols/cli-guru
+cd cli-guru
+
+pipx install .             # recommended — isolated, and puts cli-guru on PATH
 # or
-uv tool install cli-guru
-# or, from a clone
+uv tool install .
+# or
 pip install --user .
 ```
+
+pipx and uv each give the tool its own virtualenv, which matters more than usual
+here: cli-guru runs on every keypress, so you do not want it sharing an
+environment whose contents can change under it.
+
+To install without cloning first:
+
+```bash
+pipx install git+https://github.com/erols/cli-guru
+```
+
+Upgrading later means `git pull` in the clone and re-running the install command
+(or `pipx reinstall cli-guru`). Once this is published, `pipx install cli-guru`
+will be the one-liner and this section shrinks to it.
 
 Check that everything is wired up before going further:
 
