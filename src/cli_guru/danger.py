@@ -2,7 +2,7 @@
 
 This is a SAFETY feature, so it must not depend on the model noticing. Measured:
 qwen2.5-coder:3b missed 12 of 15 destructive commands when the warning was left
-to the prompt, including `rm -rf /var/log/*`. cliai decides this itself and
+to the prompt, including `rm -rf /var/log/*`. cli-guru decides this itself and
 prints the banner; the model only writes the explanation underneath.
 """
 

@@ -16,7 +16,7 @@ from .backend import BackendError, OllamaBackend
 
 
 def _err(msg: str) -> None:
-    print(f"cliai: {msg}", file=sys.stderr)
+    print(f"cli-guru: {msg}", file=sys.stderr)
 
 
 def _backend(cfg, timeout_key: str = "timeout") -> OllamaBackend:
@@ -29,7 +29,7 @@ def _backend(cfg, timeout_key: str = "timeout") -> OllamaBackend:
 def _joined(parts: List[str]) -> str:
     """Join the trailing words into one line.
 
-    argparse.REMAINDER is used for these positionals so that `cliai explain ls -la`
+    argparse.REMAINDER is used for these positionals so that `cli-guru explain ls -la`
     works: with nargs="*", argparse claims `-la` as an unknown option and exits 2.
     A leading `--` (which the shell widget always passes) is dropped here.
     """
@@ -43,7 +43,7 @@ def cmd_ask(args, cfg) -> int:
     question = _joined(args.text)
     if not question:
         try:
-            question = input("cliai> ").strip()
+            question = input("cli-guru> ").strip()
         except (EOFError, KeyboardInterrupt):
             return 1
     if not question:
@@ -111,7 +111,7 @@ def cmd_explain(args, cfg) -> int:
     if not text:
         _err("model returned no explanation")
         return 1
-    # cliai owns the warning, not the model: qwen2.5-coder:3b missed 12 of 15
+    # cli-guru owns the warning, not the model: qwen2.5-coder:3b missed 12 of 15
     # destructive commands when this was left to the prompt.
     warning = danger.banner(line)
     if warning:
@@ -166,7 +166,7 @@ def cmd_install(args, cfg) -> int:
         return 0
 
     bak = install.write(rc, current, new)
-    print(f"installed cliai ({shell}) in {rc}")
+    print(f"installed cli-guru ({shell}) in {rc}")
     if bak:
         print(f"backup: {bak}")
     print("keys: Ctrl-X Ctrl-A = ask, Ctrl-X Ctrl-H = explain")
@@ -185,23 +185,23 @@ def cmd_uninstall(args, cfg) -> int:
         _err(str(exc))
         return 1
     if current == new:
-        print(f"cliai is not installed in {rc}")
+        print(f"cli-guru is not installed in {rc}")
         return 0
     if args.dry_run:
         print(install.diff(rc, current, new))
         print("\n(dry run — nothing written)")
         return 0
     install.write(rc, current, new, backup=False)
-    print(f"removed cliai block from {rc}")
+    print(f"removed cli-guru block from {rc}")
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="cliai",
+        prog="cli-guru",
         description="Plain-language shell commands from a local ollama model.",
     )
-    parser.add_argument("--version", action="version", version=f"cliai {__version__}")
+    parser.add_argument("--version", action="version", version=f"cli-guru {__version__}")
     parser.add_argument("--debug", action="store_true",
                         help="dump prompt and model reasoning to stderr")
     parser.add_argument("--model", help="override the model")
@@ -222,12 +222,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_chk = sub.add_parser("check", help="verify ollama is reachable and the model is pulled")
     p_chk.set_defaults(func=cmd_check)
 
-    p_ins = sub.add_parser("install", help="add the cliai block to your shell rc file")
+    p_ins = sub.add_parser("install", help="add the cli-guru block to your shell rc file")
     p_ins.add_argument("--shell", choices=sorted(install.SHELL_FILES))
     p_ins.add_argument("--dry-run", action="store_true", help="print the diff, write nothing")
     p_ins.set_defaults(func=cmd_install)
 
-    p_uni = sub.add_parser("uninstall", help="remove the cliai block from your shell rc file")
+    p_uni = sub.add_parser("uninstall", help="remove the cli-guru block from your shell rc file")
     p_uni.add_argument("--shell", choices=sorted(install.SHELL_FILES))
     p_uni.add_argument("--dry-run", action="store_true")
     p_uni.set_defaults(func=cmd_uninstall)
@@ -237,7 +237,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Optional[List[str]] = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
-    # `cliai --check` is documented alongside the `check` subcommand.
+    # `cli-guru --check` is documented alongside the `check` subcommand.
     argv = ["check" if a == "--check" else a for a in argv]
 
     parser = build_parser()

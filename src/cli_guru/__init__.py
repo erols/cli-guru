@@ -1,3 +1,3 @@
-"""cliai — plain-language shell commands from a local ollama model."""
+"""cli-guru — plain-language shell commands from a local ollama model."""
 
 __version__ = "0.1.0"

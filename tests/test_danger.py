@@ -1,7 +1,7 @@
 """Safety tests. This logic exists because models are unreliable at it:
 qwen2.5-coder:3b missed 12/15 destructive commands when asked to spot them in
 the prompt; nemotron-3-nano:4b caught all 15 but raised 9 false alarms on
-read-only commands. Neither is acceptable, so cliai decides deterministically.
+read-only commands. Neither is acceptable, so cli-guru decides deterministically.
 """
 
 import unittest

@@ -1,7 +1,7 @@
 """Dotfile integration.
 
 A subcommand rather than a shell script, so it can be tested. Dotfile edits
-happen ONLY here and only when the user runs `cliai install` — never as a side
+happen ONLY here and only when the user runs `cli-guru install` — never as a side
 effect of another command.
 """
 
@@ -14,13 +14,13 @@ import shutil
 from pathlib import Path
 from typing import Optional, Tuple
 
-BEGIN = "# >>> cliai >>>"
-END = "# <<< cliai <<<"
+BEGIN = "# >>> cli-guru >>>"
+END = "# <<< cli-guru <<<"
 
 SHELL_FILES = {
-    "bash": ("cliai.bash", "~/.bashrc"),
-    "zsh": ("cliai.zsh", "~/.zshrc"),
-    "powershell": ("cliai.ps1", None),  # resolved from $PROFILE
+    "bash": ("cli-guru.bash", "~/.bashrc"),
+    "zsh": ("cli-guru.zsh", "~/.zshrc"),
+    "powershell": ("cli-guru.ps1", None),  # resolved from $PROFILE
 }
 
 
@@ -54,7 +54,7 @@ def block_for(shell: str, script: Path) -> str:
 
 
 def strip_block(text: str) -> str:
-    """Remove an existing cliai block. Idempotent; leaves everything else byte-identical."""
+    """Remove an existing cli-guru block. Idempotent; leaves everything else byte-identical."""
     out = []
     skipping = False
     for line in text.splitlines(keepends=True):
@@ -98,7 +98,7 @@ def write(rc: Path, current: str, new: str, backup: bool = True) -> Optional[Pat
     """Write `new`, backing up the original once. Returns the backup path if made."""
     made: Optional[Path] = None
     if backup and rc.exists():
-        bak = rc.with_suffix(rc.suffix + ".cliai.bak")
+        bak = rc.with_suffix(rc.suffix + ".cli-guru.bak")
         if not bak.exists():
             shutil.copy2(rc, bak)
             made = bak

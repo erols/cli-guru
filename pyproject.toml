@@ -3,7 +3,7 @@ requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cliai"
+name = "cli-guru"
 version = "0.1.0"
 description = "Plain-language shell commands and man-page explanations from a local ollama model."
 readme = "README.md"
@@ -22,7 +22,7 @@ classifiers = [
 dependencies = []
 
 [project.scripts]
-cliai = "cli_guru.cli:main"
+cli-guru = "cli_guru.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/erols/cli-guru"
@@ -33,7 +33,7 @@ package-dir = { "" = "src" }
 [tool.setuptools.packages.find]
 where = ["src"]
 
-# Shell adapters ship inside the package so `cliai install` can find them
+# Shell adapters ship inside the package so `cli-guru install` can find them
 # regardless of how the package was installed.
 [tool.setuptools.package-data]
 cli_guru = ["shell/*"]

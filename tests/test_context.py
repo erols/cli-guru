@@ -36,7 +36,7 @@ class TestRedaction(unittest.TestCase):
 
 class TestHistory(unittest.TestCase):
     def test_reads_env_and_limits(self):
-        with mock.patch.dict(os.environ, {"CLIAI_HISTORY": "a\nb\nc\nd"}):
+        with mock.patch.dict(os.environ, {"CLI_GURU_HISTORY": "a\nb\nc\nd"}):
             self.assertEqual(context.history(2), "c\nd")
 
     def test_absent_env_is_empty(self):
@@ -44,7 +44,7 @@ class TestHistory(unittest.TestCase):
             self.assertEqual(context.history(5), "")
 
     def test_history_is_redacted(self):
-        with mock.patch.dict(os.environ, {"CLIAI_HISTORY": "export TOKEN=s3cret999"}):
+        with mock.patch.dict(os.environ, {"CLI_GURU_HISTORY": "export TOKEN=s3cret999"}):
             self.assertNotIn("s3cret999", context.history(5))
 
 

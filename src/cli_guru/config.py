@@ -55,12 +55,12 @@ def config_dir() -> Path:
     if platform.system() == "Windows":
         base = os.environ.get("APPDATA")
         if base:
-            return Path(base) / "cliai"
-        return Path.home() / "AppData" / "Roaming" / "cliai"
+            return Path(base) / "cli-guru"
+        return Path.home() / "AppData" / "Roaming" / "cli-guru"
     xdg = os.environ.get("XDG_CONFIG_HOME")
     if xdg:
-        return Path(xdg) / "cliai"
-    return Path.home() / ".config" / "cliai"
+        return Path(xdg) / "cli-guru"
+    return Path.home() / ".config" / "cli-guru"
 
 
 def _parse_simple_toml(text: str) -> Dict[str, Any]:
@@ -124,10 +124,10 @@ def load(overrides: Dict[str, Any] | None = None) -> Dict[str, Any]:
     cfg.update(_load_file(config_dir() / "config.toml"))
 
     env_map = {
-        "model": "CLIAI_MODEL",
+        "model": "CLI_GURU_MODEL",
         "host": "OLLAMA_HOST",
-        "timeout": "CLIAI_TIMEOUT",
-        "think": "CLIAI_THINK",
+        "timeout": "CLI_GURU_TIMEOUT",
+        "think": "CLI_GURU_THINK",
     }
     for key, env in env_map.items():
         val = os.environ.get(env)

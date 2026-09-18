@@ -170,12 +170,12 @@ def os_name() -> str:
 
 
 def history(limit: int) -> str:
-    """Read from $CLIAI_HISTORY only.
+    """Read from $CLI_GURU_HISTORY only.
 
     The shell adapter captures this with `fc -ln`, because a subprocess reading
     $HISTFILE sees a stale file that the interactive shell has not flushed.
     """
-    raw = os.environ.get("CLIAI_HISTORY", "")
+    raw = os.environ.get("CLI_GURU_HISTORY", "")
     if not raw:
         return ""
     lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]

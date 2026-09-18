@@ -13,7 +13,7 @@ class InstallTestCase(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.rc = Path(self.tmp.name) / ".bashrc"
         self.rc.write_text(ORIGINAL)
-        self.script = Path("/opt/cliai/cliai.bash")
+        self.script = Path("/opt/cli-guru/cli-guru.bash")
         patcher = mock.patch.object(install, "rc_path", lambda shell: self.rc)
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -50,7 +50,7 @@ class InstallTestCase(unittest.TestCase):
 
     def test_backup_made_once(self):
         self._install()
-        backup = self.rc.with_suffix(self.rc.suffix + ".cliai.bak")
+        backup = self.rc.with_suffix(self.rc.suffix + ".cli-guru.bak")
         self.assertTrue(backup.exists())
         self.assertEqual(backup.read_text(), ORIGINAL)
         self._install()
@@ -64,12 +64,12 @@ class InstallTestCase(unittest.TestCase):
     def test_file_without_trailing_newline(self):
         self.rc.write_text("export A=1")
         self._install()
-        self.assertIn("export A=1\n# >>> cliai >>>", self.rc.read_text())
+        self.assertIn("export A=1\n# >>> cli-guru >>>", self.rc.read_text())
 
     def test_dry_run_diff_writes_nothing(self):
         rc, current, new = install.plan("bash", self.script)
         diff = install.diff(rc, current, new)
-        self.assertIn("+# >>> cliai >>>", diff)
+        self.assertIn("+# >>> cli-guru >>>", diff)
         self.assertEqual(self.rc.read_text(), ORIGINAL)
 
     def test_strip_block_handles_absent_block(self):
@@ -78,11 +78,11 @@ class InstallTestCase(unittest.TestCase):
 
 class ShellDetectionTestCase(unittest.TestCase):
     def test_powershell_block_uses_dot_sourcing(self):
-        block = install.block_for("powershell", Path("C:/x/cliai.ps1"))
+        block = install.block_for("powershell", Path("C:/x/cli-guru.ps1"))
         self.assertIn("Test-Path", block)
 
     def test_posix_block_guards_on_file_existing(self):
-        block = install.block_for("bash", Path("/x/cliai.bash"))
+        block = install.block_for("bash", Path("/x/cli-guru.bash"))
         self.assertIn("[ -f", block)
 
 

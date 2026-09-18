@@ -38,7 +38,7 @@ $ tar -xzvf archive.tar.gz -C /opt█        ← your line is left untouched
 ```
 
 Destructive commands are flagged before you can run them — and that check is
-done by cliai itself, not by the model:
+done by cli-guru itself, not by the model:
 
 ```console
 $ delete all the old log files█
@@ -51,7 +51,7 @@ $ find /var/log -name "*.log" -mtime +30 -delete█
 
 - [Why](#why) · [Requirements](#requirements) · [Quick start](#quick-start)
 - [Setting up ollama](#setting-up-ollama) — [install](#1-install-ollama) · [pull a model](#2-pull-a-model) · [keep it resident](#3-keep-a-model-resident-in-ram)
-- [Installing cliai](#installing-cliai) · [Usage](#usage) · [Choosing a model](#choosing-a-model)
+- [Installing cli-guru](#installing-cli-guru) · [Usage](#usage) · [Choosing a model](#choosing-a-model)
 - [Configuration](#configuration) · [Privacy](#what-gets-sent-to-the-model) · [Troubleshooting](#troubleshooting)
 
 ## Why
@@ -60,7 +60,7 @@ You know what you want. You don't remember whether it's `-mtime +7` or `-mtime -
 whether `sed -i` needs an argument on this machine, or which of `ss`/`netstat`/`lsof`
 shows process names. That's a lookup, and a lookup shouldn't cost a browser tab.
 
-cliai answers it where the question came up — in your prompt, with your current
+cli-guru answers it where the question came up — in your prompt, with your current
 directory, your files and your recent commands as context.
 
 **Nothing ever runs on its own.** `ask` writes the command into your prompt so
@@ -75,9 +75,9 @@ costs you two seconds rather than a restore from backup.
 | **Shell** | bash, zsh, or PowerShell |
 | **OS** | Linux, macOS, Windows |
 | **[ollama](https://ollama.com)** | running locally, with one model pulled |
-| **Python packages** | none — cliai is stdlib-only by design |
+| **Python packages** | none — cli-guru is stdlib-only by design |
 
-> cliai starts on every keypress, so it has no dependencies to import. The
+> cli-guru starts on every keypress, so it has no dependencies to import. The
 > whole model client is ~40 lines of `urllib.request`.
 
 ## Quick start
@@ -86,9 +86,9 @@ Already have ollama running? Four commands:
 
 ```bash
 ollama pull qwen2.5-coder:1.5b
-pipx install cliai
-cliai check          # confirms ollama is reachable and the model is present
-cliai install        # adds the keybindings to your shell
+pipx install cli-guru
+cli-guru check          # confirms ollama is reachable and the model is present
+cli-guru install        # adds the keybindings to your shell
 ```
 
 Open a new terminal, type a question, press **Ctrl-X Ctrl-A**.
@@ -97,7 +97,7 @@ Open a new terminal, type a question, press **Ctrl-X Ctrl-A**.
 
 # Setting up ollama
 
-If you already run ollama, skip to [Installing cliai](#installing-cliai).
+If you already run ollama, skip to [Installing cli-guru](#installing-cli-guru).
 
 ## 1. Install ollama
 
@@ -156,7 +156,7 @@ ollama run <model>   # chat with it directly — handy for sanity-checking
 ollama rm <model>    # delete it from disk
 ```
 
-`ollama run` opens an interactive chat; `/bye` exits. cliai doesn't use it — it
+`ollama run` opens an interactive chat; `/bye` exits. cli-guru doesn't use it — it
 talks to the HTTP API — but it's the quickest way to confirm a model works.
 
 ## 3. Keep a model resident in RAM
@@ -170,13 +170,13 @@ you've been thinking rather than typing.
 
 There are three ways to keep it loaded. Use whichever fits.
 
-### Option A — let cliai do it (default, nothing to configure)
+### Option A — let cli-guru do it (default, nothing to configure)
 
-cliai sends `keep_alive` with every request. It defaults to `8h`, so the model
+cli-guru sends `keep_alive` with every request. It defaults to `8h`, so the model
 stays resident through a working day and each use resets the timer:
 
 ```toml
-# ~/.config/cliai/config.toml
+# ~/.config/cli-guru/config.toml
 keep_alive = "8h"     # or "30m", or -1 to pin it until ollama restarts
 ```
 
@@ -204,7 +204,7 @@ curl -s http://localhost:11434/api/ps | python3 -m json.tool
 > **The last request wins.** `keep_alive` is set per request, so a later call
 > with a shorter value *shortens* the timer on an already-pinned model. If you
 > pin a model but also use it through a tool that sends its own `keep_alive`,
-> the tool's value takes over. Set cliai's `keep_alive` to `-1` if you want the
+> the tool's value takes over. Set cli-guru's `keep_alive` to `-1` if you want the
 > pin to stick.
 
 ### Option C — change the server default (applies to every client)
@@ -258,7 +258,7 @@ curl http://localhost:11434/api/chat -d '{"model":"<name>","messages":[],"keep_a
 
 ### Running ollama on another machine
 
-If ollama lives on a different box, point cliai at it:
+If ollama lives on a different box, point cli-guru at it:
 
 ```bash
 export OLLAMA_HOST=http://192.168.1.50:11434
@@ -273,12 +273,12 @@ The server must be listening beyond loopback for that to work
 
 ---
 
-# Installing cliai
+# Installing cli-guru
 
 ```bash
-pipx install cliai          # recommended — isolated, and puts cliai on PATH
+pipx install cli-guru          # recommended — isolated, and puts cli-guru on PATH
 # or
-uv tool install cliai
+uv tool install cli-guru
 # or, from a clone
 pip install --user .
 ```
@@ -286,7 +286,7 @@ pip install --user .
 Check that everything is wired up before going further:
 
 ```bash
-cliai check
+cli-guru check
 # ok: http://localhost:11434 reachable, model qwen2.5-coder:1.5b present
 # shell: bash  userland: GNU coreutils  os: Ubuntu 24.04.5 LTS
 ```
@@ -294,24 +294,24 @@ cliai check
 Then add the keybindings:
 
 ```bash
-cliai install --dry-run     # shows exactly what would change — nothing is written
-cliai install
+cli-guru install --dry-run     # shows exactly what would change — nothing is written
+cli-guru install
 ```
 
 This appends a marked block to `~/.bashrc`, `~/.zshrc` or your PowerShell
 `$PROFILE`:
 
 ```bash
-# >>> cliai >>>
-[ -f ".../cliai.bash" ] && . ".../cliai.bash"
-# <<< cliai <<<
+# >>> cli-guru >>>
+[ -f ".../cli-guru.bash" ] && . ".../cli-guru.bash"
+# <<< cli-guru <<<
 ```
 
-- Your file is **backed up** to `<file>.cliai.bak` before the first change
+- Your file is **backed up** to `<file>.cli-guru.bak` before the first change
 - Running it again **replaces** the block rather than adding a second one
-- `cliai uninstall` removes the block and leaves the rest byte-identical
+- `cli-guru uninstall` removes the block and leaves the rest byte-identical
 
-`cliai install` is the *only* thing in cliai that ever writes to a dotfile.
+`cli-guru install` is the *only* thing in cli-guru that ever writes to a dotfile.
 
 Open a new terminal (or `source ~/.bashrc`) and you're done.
 
@@ -332,46 +332,46 @@ On an empty line, ask prompts you instead.
 Both keys are **unbound in a default shell**, so nothing you already use is
 taken. They sit next to <kbd>Ctrl-X</kbd> <kbd>Ctrl-E</kbd>
 (`edit-and-execute-command`), bash's existing "hand my line to another program"
-key — cliai is the same gesture with a model instead of `$EDITOR`.
+key — cli-guru is the same gesture with a model instead of `$EDITOR`.
 
 ### Using different keys
 
 Set these **before** the source line in your rc file:
 
 ```bash
-export CLIAI_KEY='\C-a'          # ask
-export CLIAI_KEY_EXPLAIN='\eh'   # explain  (\e = Alt)
+export CLI_GURU_KEY='\C-a'          # ask
+export CLI_GURU_KEY_EXPLAIN='\eh'   # explain  (\e = Alt)
 ```
 
-cliai **refuses to replace a key you already use** and tells you what holds it:
+cli-guru **refuses to replace a key you already use** and tells you what holds it:
 
 ```
-cliai: \C-a is bound to beginning-of-line; set CLIAI_KEY to another key, or CLIAI_FORCE_KEY=1
+cli-guru: \C-a is bound to beginning-of-line; set CLI_GURU_KEY to another key, or CLI_GURU_FORCE_KEY=1
 ```
 
 If you genuinely want <kbd>Ctrl-A</kbd> (normally `beginning-of-line`; <kbd>Home</kbd>
-still does that job), add `export CLIAI_FORCE_KEY=1`.
+still does that job), add `export CLI_GURU_FORCE_KEY=1`.
 
 ## Command line
 
 Everything the keys do is available directly, and scripts cleanly:
 
 ```bash
-cliai ask "delete every .pyc file under here"
-cliai explain "dd if=/dev/zero of=/dev/sda"
+cli-guru ask "delete every .pyc file under here"
+cli-guru explain "dd if=/dev/zero of=/dev/sda"
 
-cliai check                     # is ollama up, is the model pulled
-cliai --debug ask "..."         # prompt + model reasoning to stderr
-cliai --model qwen2.5-coder:7b ask "..."     # one-off model override
+cli-guru check                     # is ollama up, is the model pulled
+cli-guru --debug ask "..."         # prompt + model reasoning to stderr
+cli-guru --model qwen2.5-coder:7b ask "..."     # one-off model override
 
-cliai install [--dry-run] [--shell bash|zsh|powershell]
-cliai uninstall
+cli-guru install [--dry-run] [--shell bash|zsh|powershell]
+cli-guru uninstall
 ```
 
 `ask` prints the command and **nothing else** to stdout, so it pipes:
 
 ```bash
-cliai ask "list files by size" | tee /dev/tty | bash     # if you're feeling brave
+cli-guru ask "list files by size" | tee /dev/tty | bash     # if you're feeling brave
 ```
 
 Warnings, errors and diagnostics always go to **stderr**, never stdout.
@@ -433,7 +433,7 @@ Ask in two short steps rather than one compound sentence and the hit rate goes
 up sharply.
 
 **Smaller models are chattier about explanations.** The 1.5B writes paragraphs
-and markdown where a larger one writes one line per flag. cliai strips the
+and markdown where a larger one writes one line per flag. cli-guru strips the
 markdown, but the prose stays wordier. If you use explain heavily, that alone
 may justify the 7B.
 
@@ -459,7 +459,7 @@ the printed commands before believing it: a validator can be too strict.
 
 # Configuration
 
-`~/.config/cliai/config.toml`, or `%APPDATA%\cliai\config.toml` on Windows.
+`~/.config/cli-guru/config.toml`, or `%APPDATA%\cli-guru\config.toml` on Windows.
 Every key is optional; these are the defaults.
 
 ```toml
@@ -477,12 +477,20 @@ history_lines = 10         # recent commands sent as context
 max_files = 50             # directory listing cap
 max_man_chars = 6000       # man page budget; OPTIONS is preserved when trimming
 include_tools = false      # see below
+explain_run_help = false   # see below
 ```
 
 **Precedence:** command-line flag → environment → config file → default.
 
-Environment: `CLIAI_MODEL`, `OLLAMA_HOST`, `CLIAI_TIMEOUT`, `CLIAI_THINK`,
-`CLIAI_KEY`, `CLIAI_KEY_EXPLAIN`, `CLIAI_FORCE_KEY`.
+Environment: `CLI_GURU_MODEL`, `OLLAMA_HOST`, `CLI_GURU_TIMEOUT`, `CLI_GURU_THINK`,
+`CLI_GURU_KEY`, `CLI_GURU_KEY_EXPLAIN`, `CLI_GURU_FORCE_KEY`.
+
+> **`explain_run_help`** lets `explain` fall back to running `<cmd> --help`
+> when no man page exists. Off by default, deliberately: you reach for `explain`
+> *before* running something — the "I pasted this from the internet" case — so
+> it must not run it for you to find out. With it off, a command with no man
+> page is answered from general knowledge and says so. Turn it on only for
+> commands you already trust.
 
 > **`include_tools`** lists your installed tools in the prompt. It sounds
 > helpful and it is measurably harmful: a small model sees `rg` in the list and
@@ -516,7 +524,7 @@ update check, and no other network call.
 
 # Safety
 
-**Destructive-command warnings are computed by cliai in Python — never by the
+**Destructive-command warnings are computed by cli-guru in Python — never by the
 model.** That's deliberate. Both models tested were unreliable, in opposite
 directions:
 
@@ -543,22 +551,22 @@ prints it above your prompt while still handing you the command to review.
 **Nothing happens when I press the key**
 
 ```bash
-bind -X | grep cliai        # bash — should list two bindings
-bindkey | grep cliai        # zsh
+bind -X | grep cli-guru        # bash — should list two bindings
+bindkey | grep cli-guru        # zsh
 ```
 
-Nothing listed? The adapter bails out silently if `cliai` isn't on `PATH`. Check
-with `command -v cliai`. If you installed with `pipx`, make sure
-`~/.local/bin` is on `PATH` *before* the cliai block in your rc file.
+Nothing listed? The adapter bails out silently if `cli-guru` isn't on `PATH`. Check
+with `command -v cli-guru`. If you installed with `pipx`, make sure
+`~/.local/bin` is on `PATH` *before* the cli-guru block in your rc file.
 
-**`cliai: no ollama at http://localhost:11434`**
+**`cli-guru: no ollama at http://localhost:11434`**
 
 The server isn't running. `ollama serve`, or start the service
 (`systemctl start ollama` / `brew services start ollama`).
 
-**`cliai: model 'x' not found`** — `ollama pull x`. `ollama list` shows what you have.
+**`cli-guru: model 'x' not found`** — `ollama pull x`. `ollama list` shows what you have.
 
-**`cliai: timed out after 20s`**
+**`cli-guru: timed out after 20s`**
 
 Usually a cold load on a large model, or CPU contention from several resident
 models. Check `ollama ps`, unload what you don't need, and consider a smaller
@@ -569,7 +577,7 @@ unloaded while idle. See [keeping a model resident](#3-keep-a-model-resident-in-
 
 **It suggests tools I don't have, or gets commands wrong** — try
 `qwen2.5-coder:7b`, and see [choosing a model](#choosing-a-model). Confirm what
-it's actually being told with `cliai --debug ask "..."`.
+it's actually being told with `cli-guru --debug ask "..."`.
 
 ---
 
@@ -580,7 +588,7 @@ git clone https://github.com/erols/cli-guru && cd cli-guru
 PYTHONPATH=src python3 -m unittest discover -s tests
 ```
 
-74 tests, no network and no ollama required — the model is stubbed with a local
+93 tests, no network and no ollama required — the model is stubbed with a local
 HTTP server, so the suite passes on a machine that has never installed ollama.
 
 ```

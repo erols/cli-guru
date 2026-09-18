@@ -33,12 +33,12 @@ class TestSimpleToml(unittest.TestCase):
 class TestPrecedence(unittest.TestCase):
     def test_env_beats_file_default(self):
         with mock.patch.object(config, "_load_file", return_value={"model": "from-file"}):
-            with mock.patch.dict(os.environ, {"CLIAI_MODEL": "from-env"}):
+            with mock.patch.dict(os.environ, {"CLI_GURU_MODEL": "from-env"}):
                 self.assertEqual(config.load()["model"], "from-env")
 
     def test_cli_beats_env(self):
         with mock.patch.object(config, "_load_file", return_value={}):
-            with mock.patch.dict(os.environ, {"CLIAI_MODEL": "from-env"}):
+            with mock.patch.dict(os.environ, {"CLI_GURU_MODEL": "from-env"}):
                 self.assertEqual(config.load({"model": "from-cli"})["model"], "from-cli")
 
     def test_none_override_ignored(self):
@@ -48,7 +48,7 @@ class TestPrecedence(unittest.TestCase):
 
     def test_bool_env_coerced(self):
         with mock.patch.object(config, "_load_file", return_value={}):
-            with mock.patch.dict(os.environ, {"CLIAI_THINK": "true"}):
+            with mock.patch.dict(os.environ, {"CLI_GURU_THINK": "true"}):
                 self.assertIs(config.load()["think"], True)
 
 

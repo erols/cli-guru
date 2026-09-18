@@ -1,4 +1,4 @@
-# cliai
+# cli-guru
 
 A single-purpose CLI assistant: turn a plain-language question into the **correct shell command with
 correct flags**, and explain existing commands using their **man pages**. Runs entirely against a
@@ -13,28 +13,31 @@ Two modes, nothing else:
 
 ## Status — read this first
 
-**Working and complete.** cliai is implemented, tested and verified end to end. 93 tests pass with
+**Working and complete.** cli-guru is implemented, tested and verified end to end. 93 tests pass with
 no network and no ollama: `PYTHONPATH=src python3 -m unittest discover -s tests`.
 
 ### Naming
 
-The **folder** was renamed `cliai` → `cli-guru` (2026-09-18), and the **import package**
-`src/cliai/` → `src/cli_guru/` (2026-09-18). The *importable* name must use an underscore —
-`cli-guru` is not a valid Python identifier. The **tool** is still called `cliai` everywhere:
-distribution name, `cliai` command, `~/.config/cliai/`, `CLIAI_*` env vars, `__cliai_*` shell
-functions, and the `# >>> cliai >>>` rc-file markers. This is deliberate, not an oversight.
+The rename to **cli-guru** is complete (2026-09-18). Everything is cli-guru now: the folder,
+the distribution, the `cli-guru` command, `~/.config/cli-guru/`, `CLI_GURU_*` env vars,
+`__cli_guru_*` shell functions, the `cli-guru.{bash,zsh,ps1}` adapters, and the
+`# >>> cli-guru >>>` rc-file markers. The artwork in `logo/` and the README header now match
+the instructions underneath them.
 
-**The artwork in `logo/` is branded `cli-guru`**, and its own usage guide suggests pairing it with
-the heading `# cli-guru`. Together with the folder rename that is fairly strong evidence the project
-is meant to become cli-guru — but the code has not been renamed, so the README header now shows a
-cli-guru lockup above instructions that all say `cliai`. That inconsistency is known, not missed.
+**The import package is `cli_guru`, with an underscore** — `cli-guru` is not a valid Python
+identifier, so `import cli-guru` is a syntax error. A hyphen is fine everywhere else: PyPI
+distribution names and `[project.scripts]` entry points both accept one. So `src/cli_guru/` and
+`from cli_guru import ...` keep the underscore while the command is `cli-guru`. This is not an
+inconsistency to tidy up; it is the only spelling that works.
 
-If the tool should be renamed too, what remains is `pyproject.toml` (`name`, and the
-`[project.scripts]` key itself), the `CLIAI_*` variable names, the marker strings in `install.py`,
-the `__cliai_*` function names in `src/cli_guru/shell/*`, the config directory, and both docs.
-The package rename is already done.
-Anyone already running `cliai install` must `cliai uninstall` **before** the rename, or the old
-marker block is orphaned in their rc file.
+Env vars use `CLI_GURU_` for the same class of reason — a hyphen is not legal in a shell
+variable name.
+
+**Upgrading from the old name:** anyone who ran `cliai install` before this must run
+`cliai uninstall` **while they still have the old version**, or the `# >>> cliai >>>` block is
+orphaned in their rc file and will keep trying to source a script that no longer exists. The new
+markers do not match the old ones, so `cli-guru uninstall` cannot clean it up for them. This was
+never published, so the affected population is the author.
 
 ### Verified environment (as of 2026-09-18)
 
@@ -45,7 +48,7 @@ marker block is orphaned in their rc file.
   genuinely faster here, which is why the benchmarks came out as they did.
 - Models pulled: `qwen2.5-coder:1.5b` (default), `qwen2.5-coder:3b`, `qwen2.5-coder:7b`,
   `nemotron-3-nano:4b`. ollama 0.34.1.
-- cliai is **not** installed in `~/.bashrc` — nothing to clean up, and no stale absolute path.
+- cli-guru is **not** installed in `~/.bashrc` — nothing to clean up, and no stale absolute path.
 
 ### Settled — do not relitigate without new measurements
 
@@ -67,7 +70,7 @@ sections below.
   shell exists in the dev sandbox. Test on a Mac and a Windows box before claiming support.
 - **Not a git repository.** `git init` is needed before `/ultrareview` or any PR workflow will run.
   A `.gitignore` is already in place.
-- **Not published.** `pipx install cliai` in the README is aspirational; the package has never been
+- **Not published.** `pipx install cli-guru` in the README is aspirational; the package has never been
   built or uploaded, and the GitHub URLs in `pyproject.toml` / README are placeholders.
 - **Compound requests fail on every model tested** — "listening ports *with process names*" reliably
   drops the `-p`. Possibly improvable by splitting the request; not attempted.
@@ -96,12 +99,12 @@ environment, so they survive the folder rename.
 | Model | `qwen2.5-coder:3b` (default), `qwen2.5-coder:7b` for accuracy | Measured, see *Choosing a model*. Context is effectively unlimited for our purposes — never truncate context to "save tokens", truncate only to save latency |
 | Thinking | **`"think": false` on ask** | Measured: 7x slower and *not* more accurate (see Latency budget) |
 | Host | `http://localhost:11434`, override with `$OLLAMA_HOST` | Normal use is local. Ollama actually runs on the LAN box `192.168.178.96:11434` — see *Verified environment* |
-| Keybinding | **`Ctrl-X Ctrl-A`**, overridable via `$CLIAI_KEY` | Shared tool: bind only keys unbound in default bash, never displace an existing one |
+| Keybinding | **`Ctrl-X Ctrl-A`**, overridable via `$CLI_GURU_KEY` | Shared tool: bind only keys unbound in default bash, never displace an existing one |
 | Output on ask | Replaces the readline buffer, **never executes** | User always sees and confirms the command before pressing Enter |
 
 ### Keybinding policy — this tool is meant to be shared
 
-**Bind nothing that default bash already uses.** cliai is intended for other people's shells, and a
+**Bind nothing that default bash already uses.** cli-guru is intended for other people's shells, and a
 tool that steals a key someone's fingers already know is a tool they uninstall. Verified against
 `bind -p` in default bash:
 
@@ -114,24 +117,24 @@ tool that steals a key someone's fingers already know is a tool they uninstall. 
 | `Ctrl-G` | `abort` | rejected — cancels an in-flight `Ctrl-R` search |
 
 `Ctrl-X Ctrl-A` is the default on merit, not just because it's free: `Ctrl-X Ctrl-E` is already
-`edit-and-execute-command`, bash's "hand my command line to another program" key. cliai is the same
+`edit-and-execute-command`, bash's "hand my command line to another program" key. cli-guru is the same
 gesture with a model instead of `$EDITOR`, so it belongs in that namespace and is discoverable to
 anyone who knows `Ctrl-X Ctrl-E`.
 
-Users choose their own keys by exporting `CLIAI_KEY` / `CLIAI_KEY_EXPLAIN` before sourcing — this is how the author gets
+Users choose their own keys by exporting `CLI_GURU_KEY` / `CLI_GURU_KEY_EXPLAIN` before sourcing — this is how the author gets
 `Ctrl-A` without it being anyone else's default:
 
 ```bash
-export CLIAI_KEY='\C-a'          # ask; accepts any readline keyseq
-export CLIAI_KEY_EXPLAIN='\eh'   # explain
-source /path/to/cliai/shell/cliai.bash
+export CLI_GURU_KEY='\C-a'          # ask; accepts any readline keyseq
+export CLI_GURU_KEY_EXPLAIN='\eh'   # explain
+source /path/to/cli-guru/shell/cli-guru.bash
 ```
 
-**Refuse to clobber, even when asked via `CLIAI_KEY`.** Before binding, check whether the key is
+**Refuse to clobber, even when asked via `CLI_GURU_KEY`.** Before binding, check whether the key is
 already claimed and warn to stderr instead of overwriting:
 
 ```bash
-__cliai_key_taken() {
+__cli_guru_key_taken() {
   local cur; cur=$(bind -p 2>/dev/null | grep -F "\"$1\":" | head -1)
   [[ -z $cur || $cur == *": self-insert"* ]] && return 1
   case $cur in *do-lowercase-version*) return 1;; esac
@@ -139,19 +142,19 @@ __cliai_key_taken() {
 }
 ```
 
-If taken, print `cliai: \C-a is bound to beginning-of-line; set CLIAI_KEY to something else, or
-CLIAI_FORCE_KEY=1 to override` and bind nothing. `CLIAI_FORCE_KEY=1` is the only path to displacing a
+If taken, print `cli-guru: \C-a is bound to beginning-of-line; set CLI_GURU_KEY to something else, or
+CLI_GURU_FORCE_KEY=1 to override` and bind nothing. `CLI_GURU_FORCE_KEY=1` is the only path to displacing a
 binding, and it must be the user typing it — never a default, never a fallback.
 
 Other sharing rules that follow from the same principle:
 
-- **Dotfile edits are allowed, but only through `cliai install`** — a marker-delimited, idempotent,
+- **Dotfile edits are allowed, but only through `cli-guru install`** — a marker-delimited, idempotent,
   reversible block with `--dry-run` and a working uninstall. See *Packaging & install* for the rules.
   Nothing else in the codebase writes to a dotfile, and no edit happens as a side effect of any
   other command
-- **Namespace every shell symbol `__cliai_*`**, and don't define aliases or exported vars in the
+- **Namespace every shell symbol `__cli_guru_*`**, and don't define aliases or exported vars in the
   sourced file
-- Sourcing `cliai.bash` in a **non-interactive shell must be a silent no-op** — guard on `[[ $- == *i* ]]`.
+- Sourcing `cli-guru.bash` in a **non-interactive shell must be a silent no-op** — guard on `[[ $- == *i* ]]`.
   It gets sourced from `.bashrc` in scripts and over `scp`/rsync sessions, where `bind` warns noisily
 - Never touch `$HISTFILE`, `HISTCONTROL`, `PROMPT_COMMAND`, `PS1`, or readline settings other than
   the two bindings
@@ -167,12 +170,12 @@ src/cli_guru/
   manpage.py        # base command, man fetch, section-aware truncation
   prompts.py        # the two system prompts
   install.py        # dotfile block: plan/diff/write/strip
-  shell/            # cliai.bash, cliai.zsh, cliai.ps1  (canonical copies)
+  shell/            # cli-guru.bash, cli-guru.zsh, cli-guru.ps1  (canonical copies)
 tests/              # stdlib unittest, ollama stubbed
 ```
 
 The adapters live **inside the package**, not at the repo root, so an installed wheel can find them
-(`cliai install` resolves them relative to `__file__`). Do not add a second copy at the top level —
+(`cli-guru install` resolves them relative to `__file__`). Do not add a second copy at the top level —
 two copies drift.
 
 **Tests use stdlib `unittest`, not pytest.** A zero-dependency tool should have a suite that runs
@@ -186,11 +189,11 @@ with zero dependencies: `python3 -m unittest discover -s tests`.
 #   $ tar -xzvf f.tgz█           [Ctrl-X Ctrl-H]  ->  explanation printed above the prompt
 # The CLI below is the same thing, scriptable:
 
-cliai ask "<question>"        # prints ONE command line to stdout. Nothing else. No prose,
+cli-guru ask "<question>"        # prints ONE command line to stdout. Nothing else. No prose,
                               # no markdown fence, no trailing newline commentary.
-cliai explain "<command>"     # prints prose to stdout, man-page grounded
-cliai --check                 # verifies ollama is reachable and the model is pulled
-cliai --debug ask "..."       # as ask, but dumps prompt + model `thinking` to stderr
+cli-guru explain "<command>"     # prints prose to stdout, man-page grounded
+cli-guru --check                 # verifies ollama is reachable and the model is pulled
+cli-guru --debug ask "..."       # as ask, but dumps prompt + model `thinking` to stderr
 ```
 
 `ask` printing anything other than a runnable command is a bug — its stdout is pasted straight into
@@ -198,29 +201,29 @@ the user's prompt. Diagnostics, warnings and errors go to **stderr**, always.
 
 ## The keybinding
 
-`shell/cliai.bash` defines a `bind -x` function. The contract:
+`shell/cli-guru.bash` defines a `bind -x` function. The contract:
 
 ```bash
-__cliai_ask() {
+__cli_guru_ask() {
   local out hist
   hist=$(fc -ln -10 2>/dev/null)          # must be captured HERE
-  out=$(CLIAI_HISTORY="$hist" cliai ask -- "$READLINE_LINE" 2>/dev/null </dev/tty)
+  out=$(CLI_GURU_HISTORY="$hist" cli-guru ask -- "$READLINE_LINE" 2>/dev/null </dev/tty)
   [[ -n $out ]] || return                  # failure leaves the user's line untouched
   READLINE_LINE="$out"
   READLINE_POINT=${#READLINE_LINE}
 }
-bind -x "\"${CLIAI_KEY:-\\C-x\\C-a}\": __cliai_ask"
-bind -x "\"${CLIAI_KEY_EXPLAIN:-\\C-x\\C-h}\": __cliai_explain"
+bind -x "\"${CLI_GURU_KEY:-\\C-x\\C-a}\": __cli_guru_ask"
+bind -x "\"${CLI_GURU_KEY_EXPLAIN:-\\C-x\\C-h}\": __cli_guru_explain"
 ```
 
-`__cliai_explain` is **not** symmetric with `__cliai_ask`. It prints above the prompt and leaves the
+`__cli_guru_explain` is **not** symmetric with `__cli_guru_ask`. It prints above the prompt and leaves the
 buffer alone:
 
 ```bash
-__cliai_explain() {
+__cli_guru_explain() {
   [[ -n $READLINE_LINE ]] || return
   printf '\n'                                    # get off the prompt line first
-  cliai explain -- "$READLINE_LINE" </dev/tty     # stdout goes to the terminal, not the buffer
+  cli-guru explain -- "$READLINE_LINE" </dev/tty     # stdout goes to the terminal, not the buffer
   # READLINE_LINE is deliberately untouched — readline redraws the prompt and the line on return
 }
 ```
@@ -232,7 +235,7 @@ Non-obvious constraints:
 
 - **History must be read in the shell function, not in Python.** `bind -x` runs in the interactive
   shell, so `fc -ln -10` sees the live in-memory history. A subprocess reading `$HISTFILE` sees a
-  stale file that hasn't been flushed. This is why history arrives via `$CLIAI_HISTORY`.
+  stale file that hasn't been flushed. This is why history arrives via `$CLI_GURU_HISTORY`.
 - **`</dev/tty` is fatal where there is no controlling terminal** (containers, some ssh/tmux):
   redirecting from it aborts the command outright, so the buffer silently never updates. Probe it
   once at source time inside a subshell — `if ( exec </dev/tty ) 2>/dev/null` — and fall back to no
@@ -257,7 +260,7 @@ block — cap every `subprocess.run` with `timeout=`.
 - **Directory listing** — names + type marker only, `max_files` cap (default 50), sorted, truncated
   with a `… N more` line. Never file *contents*
 - **Git** — branch and `git status --porcelain` summary (counts, not full list) when in a repo
-- **Recent history** — last 10 commands from `$CLIAI_HISTORY`; strongest signal available for what
+- **Recent history** — last 10 commands from `$CLI_GURU_HISTORY`; strongest signal available for what
   the user is actually doing
 - **System** — OS/distro from `/etc/os-release`, kernel, shell
 - **Available tools** — collected, but **NOT sent to the model by default** (`include_tools = false`).
@@ -265,7 +268,7 @@ block — cap every `subprocess.run` with `timeout=`.
   without it on a four-case probe, because it sees `rg` in the list and forces it into every answer
   with invented flags (`rg --type=py,md,toml -w -m 100M -t "modified:[^ ]*week"`). The intended
   benefit — not suggesting a tool you lack — is worth less than the anchoring costs. Still collected
-  for `cliai check` and `--debug`. Allowlist only; never enumerate `$PATH`
+  for `cli-guru check` and `--debug`. Allowlist only; never enumerate `$PATH`
 
 ### Privacy rules — non-negotiable
 
@@ -298,7 +301,7 @@ Related traps, all observed:
   model omitted the warning for `rm -rf /var/log/*`. Moved to the top, it fires reliably. Anything
   safety-relevant goes first.
 - Telling it the working directory invites it to build absolute paths and **typo them**
-  (`~/PROJECTS/cliai` came back as `~/PROJECTS/CLIAU`). The prompt now says the command runs *in*
+  (`~/PROJECTS/cli-guru` came back as `~/PROJECTS/CLIAU`). The prompt now says the command runs *in*
   the working directory, so relative paths are used.
 - A top-level file listing alone leaves it blind: asked to count Python lines with only
   `src/ tests/ CLAUDE.md` visible, it grepped CLAUDE.md. `context.file_types` (a bounded recursive
@@ -357,7 +360,7 @@ belt-and-braces; it is because both models are unreliable at it, in opposite dir
 
 Under-warning hides real risk; over-warning causes fatigue until every warning is ignored. Neither
 is acceptable for the one output where being wrong matters, so the prompt no longer mentions
-warnings at all and `cliai` prints the banner itself.
+warnings at all and `cli-guru` prints the banner itself.
 
 Both modes use it: `explain` prints the banner above the explanation, and `ask` writes it to
 **stderr** so the shell widget shows it above the prompt while the command still lands in the
@@ -437,18 +440,18 @@ Targets: ask ≤ 1 s warm; anything over `timeout` aborts and leaves the line un
 **Use plain Python.** Runtime dependencies stay at zero; dev/test deps are unrestricted.
 
 The entire LLM interaction is *one* `POST /api/chat` with a two-message array. LangChain's value is
-abstraction across providers, chains, agents and retrievers — cliai has one provider, one call, no
+abstraction across providers, chains, agents and retrievers — cli-guru has one provider, one call, no
 chain and no retrieval. There is nothing for the abstraction to abstract.
 
 Three concrete costs, in order of importance:
 
-1. **Startup latency, paid on every keypress.** Measured here: bare interpreter 12 ms, cliai's whole
+1. **Startup latency, paid on every keypress.** Measured here: bare interpreter 12 ms, cli-guru's whole
    stdlib import set 43 ms, ollama round trip ~650 ms. `langchain_core` plus a provider integration
    imports pydantic v2 and a large typing layer. **This was not measured — no pip in the dev sandbox.**
    Before adopting any framework, measure it:
    `python3 -X importtime -c "import langchain_ollama" 2>&1 | tail -1`
    If it exceeds ~150 ms, it is disqualified on latency alone regardless of other merits.
-2. **Install weight for a shared tool.** `pipx install cliai` should be a fast, boring, offline-able
+2. **Install weight for a shared tool.** `pipx install cli-guru` should be a fast, boring, offline-able
    operation. A large transitive tree that churns across minor releases is a support burden for
    something whose whole job is putting one line in your prompt.
 3. **Version fragility.** Breaking changes across minor versions are a poor trade for code that is
@@ -491,7 +494,7 @@ the shell adapters and the context/man collectors.
 
 ### Shell adapters (`shell/`)
 
-Each adapter does the same three things: read the current line, call `cliai ask`, replace the line.
+Each adapter does the same three things: read the current line, call `cli-guru ask`, replace the line.
 The mechanisms share no code.
 
 | Shell | Platform | Buffer API | Notes |
@@ -522,12 +525,12 @@ Branch on `platform.system()`, never on "is there a `/etc`":
 ## Packaging & install
 
 Shipped as a standard Python package: `pyproject.toml`, console entry point
-`cliai = "cli_guru.cli:main"`, installed with `pipx install cliai` or `uv tool install cliai`.
+`cli-guru = "cli_guru.cli:main"`, installed with `pipx install cli-guru` or `uv tool install cli-guru`.
 
 Once there are modules, the layout is `src/cli_guru/` with `cli.py`, `context.py`, `backend.py`,
 `manpage.py`, `prompts.py`. Keep the single file until it earns the split.
 
-### `cliai install`
+### `cli-guru install`
 
 A subcommand, not a shell script — it can then be tested. It detects the shell, writes the source
 line, and prints what it did.
@@ -537,14 +540,14 @@ these rules:
 
 - **A marker-delimited block**, conda-style, so it can be found, replaced and removed exactly:
   ```
-  # >>> cliai >>>
-  [ -f ~/.local/share/cliai/cliai.bash ] && . ~/.local/share/cliai/cliai.bash
-  # <<< cliai <<<
+  # >>> cli-guru >>>
+  [ -f ~/.local/share/cli-guru/cli-guru.bash ] && . ~/.local/share/cli-guru/cli-guru.bash
+  # <<< cli-guru <<<
   ```
 - **Idempotent** — running it twice replaces the block, never appends a second one
 - **`--dry-run` prints the diff and writes nothing**, and is what the README shows first
-- **Back up** the file to `<file>.cliai.bak` before the first modification
-- **`cliai uninstall` removes the block cleanly**, leaving the rest byte-identical. Ship this at the
+- **Back up** the file to `<file>.cli-guru.bak` before the first modification
+- **`cli-guru uninstall` removes the block cleanly**, leaving the rest byte-identical. Ship this at the
   same time as install, not later — an uninstall path that arrives second never gets written
 - Still **never** modify readline settings, `PS1`, `PROMPT_COMMAND` or history variables
 - The keybinding policy in *Keybinding policy* is unchanged: the installed line binds
@@ -571,14 +574,14 @@ these rules:
 
 ## Config
 
-`~/.config/cliai/config.toml`, read with `tomllib`. Missing file is normal, not an error — every key
+`~/.config/cli-guru/config.toml`, read with `tomllib`. Missing file is normal, not an error — every key
 has a working default.
 
 ```toml
 model = "nemotron-3-nano:4b"
 host = "http://localhost:11434"
 think = false                 # ask mode. true costs ~4s for no accuracy gain — see Latency budget
-# keybinding is NOT configured here — it must be set before sourcing cliai.bash, via $CLIAI_KEY
+# keybinding is NOT configured here — it must be set before sourcing cli-guru.bash, via $CLI_GURU_KEY
 timeout = 20                  # seconds; a keypress must not hang the prompt
 history_lines = 10
 max_files = 50
@@ -586,15 +589,15 @@ max_man_chars = 12000
 explain_run_help = false      # true lets explain RUN `<cmd> --help` when no man page exists
 ```
 
-Precedence: CLI flag > env (`CLIAI_MODEL`, `OLLAMA_HOST`) > config file > default.
+Precedence: CLI flag > env (`CLI_GURU_MODEL`, `OLLAMA_HOST`) > config file > default.
 
 ## Error handling
 
 Every failure is a one-line stderr message with the fix in it, and exit code 1 with empty stdout:
 
-- Connection refused → `cliai: no ollama at http://localhost:11434 (start it with: ollama serve)`
-- 404 on model → `cliai: model 'X' not found (pull it with: ollama pull X)`
-- Timeout → `cliai: timed out after 20s — try a smaller model`
+- Connection refused → `cli-guru: no ollama at http://localhost:11434 (start it with: ollama serve)`
+- 404 on model → `cli-guru: model 'X' not found (pull it with: ollama pull X)`
+- Timeout → `cli-guru: timed out after 20s — try a smaller model`
 
 No stack traces reach the user. A traceback in the readline buffer is the worst possible outcome.
 
@@ -606,7 +609,7 @@ No stack traces reach the user. A traceback in the readline buffer is the worst 
 - Context assembly: `tmp_path` fixtures for cwd/git/file-listing cases
 - Man parsing: use the in-file fixture in `tests/test_manpage.py`; never shell out to `man`, which
   differs between GNU and BSD and may be absent
-- `argparse.REMAINDER` on ask/explain positionals, so `cliai explain ls -la` does not die with
+- `argparse.REMAINDER` on ask/explain positionals, so `cli-guru explain ls -la` does not die with
   "unrecognized arguments" — with `nargs="*"` argparse claims `-la` as its own flag
 - Output sanitising: table-driven over the ways models wrap output (` ```bash `, backticks, `$ `
   prefix, trailing prose) — this is the highest-value test in the suite
@@ -614,7 +617,7 @@ No stack traces reach the user. A traceback in the readline buffer is the worst 
 
 ## Conventions
 
-- stdlib only in `cliai.py`; test-only deps are fine
+- stdlib only in `cli-guru.py`; test-only deps are fine
 - `ruff` defaults for lint and format
 - Type hints on function signatures
 - Comments explain *why*, not *what* — the "read this" notes above are the model for the tone

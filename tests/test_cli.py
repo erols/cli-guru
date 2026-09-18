@@ -63,7 +63,7 @@ class AskTestCase(unittest.TestCase):
 
 class ArgumentTestCase(unittest.TestCase):
     def test_user_flags_are_not_claimed_by_argparse(self):
-        """`cliai explain ls -la` must not die with 'unrecognized arguments'."""
+        """`cli-guru explain ls -la` must not die with 'unrecognized arguments'."""
         code, out, _ = run(["explain", "ls", "-la"], content="Lists files.")
         self.assertEqual(code, 0)
 
