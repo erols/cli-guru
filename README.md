@@ -92,10 +92,9 @@ Already have ollama running?
 
 ```bash
 ollama pull qwen2.5-coder:1.5b
-git clone https://github.com/erols/cli-guru
-pipx install ./cli-guru     # installs FROM the clone — the path is the argument
-cli-guru check              # confirms ollama is reachable and the model is present
-cli-guru install            # adds the keybindings to your shell
+pipx install cli-guru
+cli-guru check          # confirms ollama is reachable and the model is present
+cli-guru install        # adds the keybindings to your shell
 ```
 
 Open a new terminal, type a question, press **Ctrl-X Ctrl-A**.
@@ -282,52 +281,42 @@ The server must be listening beyond loopback for that to work
 
 # Installing cli-guru
 
-cli-guru is **not on PyPI yet**, so install it from a clone:
-
 ```bash
-git clone https://github.com/erols/cli-guru
-pipx install ./cli-guru        # recommended — isolated, and puts cli-guru on PATH
+pipx install cli-guru          # recommended — isolated, and puts cli-guru on PATH
 # or
-uv tool install ./cli-guru
-# or
-pip install --user ./cli-guru
-```
-
-**The path argument is the whole command.** `pipx install` with nothing after it
-installs nothing, and the failure is easy to walk past — you only notice later,
-when `cli-guru` is not found. If you are already inside the clone, the equivalent
-is `pipx install .`, where that lone `.` is the argument and is easy to drop.
-Staying in the parent directory and naming `./cli-guru` is harder to get wrong.
-
-Confirm it actually landed before going further:
-
-```bash
-pipx list        # cli-guru should appear, with `- cli-guru` under it
+uv tool install cli-guru
 ```
 
 pipx and uv each give the tool its own virtualenv, which matters more than usual
 here: cli-guru runs on every keypress, so you do not want it sharing an
 environment whose contents can change under it.
 
-To install without cloning first:
+Confirm it landed before going further:
 
 ```bash
-pipx install git+https://github.com/erols/cli-guru
+pipx list        # cli-guru should appear, with `- cli-guru` under it
+```
+
+To run the unreleased code instead, install from a clone — note the path is the
+argument, and a bare `pipx install` with nothing after it silently installs
+nothing:
+
+```bash
+git clone https://github.com/erols/cli-guru
+pipx install ./cli-guru
 ```
 
 ### Updating
 
 ```bash
-git -C ~/PROJECTS/cli-guru pull          # wherever your clone lives
-pipx install --force ~/PROJECTS/cli-guru
-cli-guru install                         # idempotent — refreshes the rc block
-exec bash -l                             # or open a new terminal
+pipx upgrade cli-guru
+cli-guru install        # idempotent — refreshes the rc block
+exec bash -l            # or open a new terminal
 ```
 
-`pipx upgrade` does nothing useful here: there is no index to upgrade *from*
-until this is published. `pipx reinstall cli-guru` also works — it replays the
-path it recorded at install time — but `--force` with the path written out
-leaves no doubt about which source was used.
+Installed from a clone instead? Then it is `git pull` followed by
+`pipx install --force ~/path/to/cli-guru`; `pipx upgrade` has no index to check
+against for a path install.
 
 **Why `cli-guru install` again.** The rc block holds the adapter's absolute
 path, which lives inside the pipx virtualenv and carries the Python version in
@@ -351,9 +340,6 @@ Confirm the update landed:
 cli-guru --version
 bind -X | grep cli_guru      # in a NEW shell: expect the two bindings
 ```
-
-Once this is on PyPI, updating becomes `pipx upgrade cli-guru` and this section
-shrinks to that.
 
 Check that everything is wired up before going further:
 

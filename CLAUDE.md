@@ -70,18 +70,22 @@ sections below.
   shell exists in the dev sandbox. Test on a Mac and a Windows box before claiming support.
 - **Not a git repository.** `git init` is needed before `/ultrareview` or any PR workflow will run.
   A `.gitignore` is already in place.
-- **Not published.** `cli-guru` is unregistered on PyPI. The README no longer pretends otherwise:
-  it documents clone-and-install (`pipx install .`) and says publication is pending, so nothing in
-  it is aspirational any more. The GitHub URLs in `pyproject.toml` / README are still unverified.
+- **Published.** `cli-guru` 0.2.0 is on PyPI (2026-09-18): wheel + sdist, zero dependencies,
+  `requires-python >=3.9`, MIT. `pipx install cli-guru` is now literally true, and the
+  clone-and-install path is documented as the way to run unreleased code. The GitHub repo is
+  public and the README's raw.githubusercontent.com logo URLs resolve, so the project page renders.
   - **`cliai` on PyPI is someone else's package** — version 0.2.9 by "Baksi Li", unrelated to this
     project. The pre-rename README told readers to `pipx install cliai`, which would have installed
-    a stranger's code under this tool's name. Checked 2026-09-18. A second reason the rename was
-    worth doing, and a reason to register `cli-guru` before advertising it anywhere.
-  - **The package builds and the adapters ship.** Built for the first time on 2026-09-18:
-    `cli_guru/shell/cli-guru.{bash,zsh,ps1}` land beside the modules, which is what `install.py`'s
-    `__file__`-relative lookup needs. Verified via `setuptools build_py`; a full `pipx install`
-    round trip has NOT been run (no pipx/pip/uv in the dev sandbox), so do that once on a real
-    machine before telling anyone else to.
+    a stranger's code under this tool's name. Checked 2026-09-18, and the reason the rename mattered
+    more than cosmetically.
+  - **Publishing gotchas, all hit on the first run.** Ubuntu's apt `twine` is too old to parse
+    `Metadata-Version: 2.4` and reports it as "missing required fields: Name, Version" — use pipx,
+    not apt, for Python tooling. A PyPI API token is `pypi-` + macaroon; a drag-select in the browser
+    clips the prefix and the upload 403s with "Invalid or non-existent authentication information".
+    A project-scoped token cannot authorise a project's first upload; use an account-scoped one.
+  - **Version numbers are permanent.** A released version can never be re-uploaded, even after
+    deleting the release. Bump `cli_guru.__version__` — `pyproject.toml` reads it via
+    `dynamic = ["version"]`, so the two cannot drift.
 - **Compound requests fail on every model tested** — "listening ports *with process names*" reliably
   drops the `-p`. Possibly improvable by splitting the request; not attempted.
 - `bench/eval_explain.py` still scores the *model's* ability to spot destructive commands. That is
@@ -564,9 +568,8 @@ Branch on `platform.system()`, never on "is there a `/etc`":
 ## Packaging & install
 
 Shipped as a standard Python package: `pyproject.toml`, console entry point
-`cli-guru = "cli_guru.cli:main"`. Until it is on PyPI, installation is from a clone
-(`pipx install ./cli-guru`) or `pipx install git+https://github.com/erols/cli-guru` — see
-*Not done / open items*.
+`cli-guru = "cli_guru.cli:main"`, installed with `pipx install cli-guru` or
+`uv tool install cli-guru`. Clone-and-install (`pipx install ./cli-guru`) is for unreleased code.
 
 **`cli_guru.__version__` is the single source of truth.** `pyproject.toml` declares
 `dynamic = ["version"]` and reads that attribute, so the CLI and the installed distribution cannot
