@@ -9,6 +9,7 @@ import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+from cli_guru import backend
 from cli_guru.backend import BackendError, OllamaBackend
 
 
@@ -97,6 +98,27 @@ class BackendTestCase(unittest.TestCase):
         _Handler.status = 500
         with self.assertRaises(BackendError):
             OllamaBackend(self.host, "test-model:1b").chat("sys", "user")
+
+
+class ResponseSizeTestCase(unittest.TestCase):
+    """$OLLAMA_HOST may point anywhere, over plain HTTP. A reply that never ends
+    must not be read until the process runs out of memory."""
+
+    class _Endless:
+        def read(self, n=-1):
+            return b"x" * n if n and n > 0 else b"x" * (backend.MAX_RESPONSE_BYTES * 2)
+
+    class _Normal:
+        def read(self, n=-1):
+            return b'{"ok": 1}'
+
+    def test_oversized_response_is_refused(self):
+        with self.assertRaises(BackendError) as ctx:
+            backend._read_capped(self._Endless())
+        self.assertIn("refusing", str(ctx.exception))
+
+    def test_normal_response_passes_through(self):
+        self.assertEqual(backend._read_capped(self._Normal()), b'{"ok": 1}')
 
 
 if __name__ == "__main__":

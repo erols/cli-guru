@@ -98,5 +98,65 @@ class TestRender(unittest.TestCase):
         self.assertIn("Working directory: ~/x", out)
 
 
+class TestRedactionGaps(unittest.TestCase):
+    """Shapes that survived redaction until a pre-launch review found them.
+
+    History goes into the prompt and the prompt crosses the network to whatever
+    $OLLAMA_HOST names, over plain HTTP. These are credentials, so they must not.
+    """
+
+    LEAKS = [
+        ('curl -H "Authorization: Basic dXNlcjpwYXNzd29yZA==" x', "dXNlcjpwYXNzd29yZA=="),
+        ("curl -u admin:hunter2 https://x", "hunter2"),
+        ("docker login -p hunter2secret registry.io", "hunter2secret"),
+        ("openssl rsa -passin pass:hunter2 -in k.pem", "hunter2"),
+        ("curl --user bob:s3cr3tpw https://x", "s3cr3tpw"),
+    ]
+
+    # Over-redaction is not free either: it costs the model context it uses.
+    # These are ports, uids and prose, not secrets.
+    KEEP = [
+        "docker run -u 1000:1000 -p 8080:80 img",
+        "docker run -p 127.0.0.1:8080:80 img",
+        "docker run -p [::1]:8080:80 img",
+        "psql -p 5432 -h localhost",
+        "ssh -p 2222 host",
+        'git commit -m "fix the -p flag"',
+    ]
+
+    def test_credentials_are_redacted(self):
+        for line, secret in self.LEAKS:
+            with self.subTest(line=line):
+                self.assertNotIn(secret, context.redact(line))
+
+    def test_ports_and_uids_survive(self):
+        for line in self.KEEP:
+            with self.subTest(line=line):
+                self.assertEqual(context.redact(line), line)
+
+
+class TestGitPrivacyAndSafety(unittest.TestCase):
+    def test_git_commands_disable_fsmonitor(self):
+        """A repo's own .git/config can name a command git will run. Context is
+        assembled wherever the user stands, including an untrusted checkout."""
+        self.assertEqual(context._GIT[:1], ["git"])
+        self.assertIn("core.fsmonitor=", context._GIT)
+
+    def test_identity_is_never_collected(self):
+        """`git config user.name` is the user's real name and helps write no
+        command. It used to be sent on every keypress."""
+        calls = []
+
+        def spy(cmd, timeout=2.0, cwd=None):
+            calls.append(cmd)
+            return "true" if "rev-parse" in cmd and "--is-inside-work-tree" in cmd else ""
+
+        with mock.patch.object(context, "_run", spy):
+            out = context.git_info(Path("."))
+        for cmd in calls:
+            self.assertNotIn("user.name", cmd, f"collected identity: {cmd}")
+        self.assertNotIn("user", out)
+
+
 if __name__ == "__main__":
     unittest.main()

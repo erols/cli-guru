@@ -80,5 +80,28 @@ class TestProse(unittest.TestCase):
         self.assertEqual(sanitise.prose(""), "")
 
 
+class TestControlCharacters(unittest.TestCase):
+    """Escape sequences must never reach the readline buffer.
+
+    `\x1b[2K\x1b[1G` clears the line and homes the cursor, so the buffer can
+    display one command and run another — and the hidden tail is invisible to
+    danger.py too. Rejected, not stripped: a line needing this is not a command.
+    """
+
+    def test_rejects_ansi_line_redraw(self):
+        self.assertEqual(sanitise.command("echo safe\x1b[2K\x1b[1G rm -rf ~/x"), "")
+
+    def test_rejects_backspace_and_nul(self):
+        self.assertEqual(sanitise.command("ls -la\x08\x08\x08rm -rf ~"), "")
+        self.assertEqual(sanitise.command("ls\x00 -la"), "")
+
+    def test_tab_is_not_a_control_character_here(self):
+        self.assertEqual(sanitise.command('printf "a\tb"'), 'printf "a\tb"')
+
+    def test_prose_strips_rather_than_discards(self):
+        """explain output is printed, never run, so keep the words."""
+        self.assertEqual(sanitise.prose("bold \x1b[1mtext\x1b[0m here"), "bold text here")
+
+
 if __name__ == "__main__":
     unittest.main()

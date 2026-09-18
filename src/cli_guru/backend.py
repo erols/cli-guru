@@ -17,6 +17,22 @@ class BackendError(Exception):
     """User-facing failure. The message is printed verbatim to stderr."""
 
 
+# A real reply is a few KB: ask is capped at 160 predicted tokens, explain at
+# 700. This bound exists for the case where the host is not what we think it is
+# — `$OLLAMA_HOST` may point across a LAN, over plain HTTP — so a hostile or
+# broken endpoint cannot stream until the process runs out of memory.
+MAX_RESPONSE_BYTES = 8 * 1024 * 1024
+
+
+def _read_capped(resp) -> bytes:
+    data = resp.read(MAX_RESPONSE_BYTES + 1)
+    if len(data) > MAX_RESPONSE_BYTES:
+        raise BackendError(
+            f"ollama sent more than {MAX_RESPONSE_BYTES // (1024 * 1024)}MB — refusing it"
+        )
+    return data
+
+
 class OllamaBackend:
     def __init__(
         self, host: str, model: str, timeout: int = 20, keep_alive: str = "8h"
@@ -60,11 +76,11 @@ class OllamaBackend:
         )
         try:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                body = json.loads(resp.read().decode("utf-8"))
+                body = json.loads(_read_capped(resp).decode("utf-8"))
         except urllib.error.HTTPError as exc:
             detail = ""
             try:
-                detail = json.loads(exc.read().decode("utf-8")).get("error", "")
+                detail = json.loads(_read_capped(exc).decode("utf-8")).get("error", "")
             except Exception:
                 pass
             if exc.code == 404 or "not found" in detail.lower():
@@ -96,7 +112,7 @@ class OllamaBackend:
         """Verify reachability and that the model is pulled. Returns a status line."""
         try:
             with urllib.request.urlopen(f"{self.host}/api/tags", timeout=self.timeout) as resp:
-                tags = json.loads(resp.read().decode("utf-8"))
+                tags = json.loads(_read_capped(resp).decode("utf-8"))
         except urllib.error.URLError as exc:
             raise BackendError(
                 f"no ollama at {self.host} (start it with: ollama serve, or set OLLAMA_HOST)"

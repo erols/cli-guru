@@ -25,8 +25,17 @@ TOOLS = [
 # first so the value is consumed too — a pattern matching only the key name
 # leaves the secret sitting in the text.
 _SECRET_PATTERNS = [
-    # Authorization headers: redact the whole thing, scheme included.
-    (re.compile(r"(?:authorization\s*:\s*)?\bbearer\s+\S+", re.IGNORECASE), "<redacted>"),
+    # Authorization headers: redact the whole value, WHATEVER the scheme. Basic
+    # is base64 of user:password, which is encoding, not protection.
+    (re.compile(r"authorization\s*:\s*\w+\s+\S+", re.IGNORECASE), "Authorization: <redacted>"),
+    # A bare `Bearer <token>` with no header name in front of it.
+    (re.compile(r"\bbearer\s+\S+", re.IGNORECASE), "<redacted>"),
+    # curl -u user:pass / --user user:pass. The negative lookahead keeps
+    # `docker run -u 1000:1000` (a uid:gid, not a credential) intact.
+    (re.compile(r"(--?u(?:ser)?)(?:[=\s]+)(?![\d.:\[\]]+(?:\s|$))\S*:\S+", re.IGNORECASE),
+     r"\1=<redacted>"),
+    # openssl-style `pass:SECRET`, `env:VAR`, `file:path` argument forms.
+    (re.compile(r"\bpass:\S+", re.IGNORECASE), "pass:<redacted>"),
     # KEY=value / KEY: value, where the key name looks secret-ish.
     (re.compile(
         r"\b([\w.-]*(?:password|passwd|secret|token|api[_-]?key|access[_-]?key"
@@ -37,9 +46,21 @@ _SECRET_PATTERNS = [
                 re.IGNORECASE), r"\1=<redacted>"),
     # mysql-style attached password: -pSECRET (no space, so `-p 5432` is left alone).
     (re.compile(r"(-p)\S{6,}"), r"\1<redacted>"),
+    # The spaced form `-p SECRET` (docker login, psql). Purely numeric or
+    # colon-separated values are ports or port maps — `-p 8080:80` survives.
+    (re.compile(r"(-p)\s+(?![\d.:\[\]]+(?:\s|$))(\S{6,})"), r"\1 <redacted>"),
     # Bare AWS access key ids.
     (re.compile(r"\bAKIA[0-9A-Z]{12,}\b"), "<redacted>"),
 ]
+
+
+# A repository carries its own .git/config, and git will happily run commands
+# named in it — `core.fsmonitor` fires on `git status`. Since context is
+# assembled wherever the user is standing, cd'ing into an untrusted checkout
+# (one unpacked from an archive, say — `git clone` does not copy config) would
+# execute it on the next keypress. Disable it explicitly; `safe.directory` does
+# not help, because it only guards repositories owned by somebody else.
+_GIT = ["git", "-c", "core.fsmonitor="]
 
 
 def _run(cmd: List[str], timeout: float = 2.0, cwd: Optional[str] = None) -> str:
@@ -110,14 +131,15 @@ def file_types(cwd: Path, max_entries: int = 2000) -> str:
 
 
 def git_info(cwd: Path) -> str:
-    if not _run(["git", "rev-parse", "--is-inside-work-tree"], cwd=str(cwd)) == "true":
+    if not _run(_GIT + ["rev-parse", "--is-inside-work-tree"], cwd=str(cwd)) == "true":
         return ""
-    branch = _run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(cwd)) or "?"
-    user = _run(["git", "config", "user.name"], cwd=str(cwd))
-    porcelain = _run(["git", "status", "--porcelain"], cwd=str(cwd))
-    who = f", user {user}" if user else ""
+    branch = _run(_GIT + ["rev-parse", "--abbrev-ref", "HEAD"], cwd=str(cwd)) or "?"
+    # `git config user.name` used to go in here. It is the user's real name, it
+    # is no help in writing a shell command, and it was not in the documented
+    # context list. Do not put it back.
+    porcelain = _run(_GIT + ["status", "--porcelain"], cwd=str(cwd))
     if not porcelain:
-        return f"git: on {branch}, clean{who}"
+        return f"git: on {branch}, clean"
     staged = untracked = modified = 0
     for line in porcelain.splitlines():
         if line.startswith("??"):
@@ -128,7 +150,7 @@ def git_info(cwd: Path) -> str:
             modified += 1
     return (
         f"git: on {branch}, {staged} staged, {modified} modified, "
-        f"{untracked} untracked{who}"
+        f"{untracked} untracked"
     )
 
 

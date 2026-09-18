@@ -277,7 +277,10 @@ block — cap every `subprocess.run` with `timeout=`.
 - **cwd** — absolute path, and `~` form
 - **Directory listing** — names + type marker only, `max_files` cap (default 50), sorted, truncated
   with a `… N more` line. Never file *contents*
-- **Git** — branch and `git status --porcelain` summary (counts, not full list) when in a repo
+- **Git** — branch and `git status --porcelain` summary (counts, not full list) when in a repo.
+  **Never the identity**: `git config user.name` was collected here once. It is the user's real
+  name, it helps write no command, and it went over the network on every keypress. Do not re-add it.
+  Every git call goes through `context._GIT`, which pins `-c core.fsmonitor=` — see *Privacy rules*
 - **Recent history** — last 10 commands from `$CLI_GURU_HISTORY`; strongest signal available for what
   the user is actually doing
 - **System** — OS/distro from `/etc/os-release`, kernel, shell
@@ -291,10 +294,28 @@ block — cap every `subprocess.run` with `timeout=`.
 ### Privacy rules — non-negotiable
 
 - Never read or transmit file contents, `.env` files, or the process environment
-- Redact history lines matching secret-ish patterns (`--password`, `token=`, `Bearer `, `AWS_SECRET`,
-  `api[_-]?key`) before they enter the prompt
+- Never transmit the user's identity. No `git config user.name`, no email, no hostname
+- Redact history lines matching secret-ish patterns before they enter the prompt. Coverage is
+  `KEY=value` forms, `--password`/`--token`/`--api-key`, `Authorization:` headers of **any** scheme
+  (Basic is base64, which is encoding, not protection), `-u user:pass`, `pass:SECRET`, attached and
+  spaced `-p SECRET`, and bare AWS key ids. The spaced `-p` rule skips values shaped like ports or
+  port maps, so `docker run -p 127.0.0.1:8080:80` survives — over-redaction costs the model context,
+  so both directions have a test
 - Traffic goes to the configured Ollama host only. No other network calls, ever, including telemetry
-  and update checks
+  and update checks. Responses are capped at `backend.MAX_RESPONSE_BYTES`: `$OLLAMA_HOST` often
+  points across a LAN over plain HTTP, and that host is not necessarily what we think it is
+
+**Known and accepted, not fixed:**
+
+- **The prompt carries attacker-influenceable text.** Filenames from the directory listing and the
+  man page fetched by `explain` both go to the model unescaped, so a hostile filename can try to
+  steer the answer. The defences are that `ask` output is reviewed by the user before Enter,
+  `danger.py` judges the result deterministically, and `sanitise` rejects control characters.
+  Escaping cannot fix this — the model reads text, and the text is the input
+- **Anything git runs, we run.** `-c core.fsmonitor=` closes the vector that actually fires on
+  `git status`, but a repository's config is a large surface. `git clone` does not copy config, so
+  reaching this needs a `.git` directory delivered some other way (an unpacked archive, a synced
+  folder). Most shell prompts that show git status carry the same exposure
 
 ## Prompting
 

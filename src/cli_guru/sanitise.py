@@ -34,6 +34,24 @@ def strip_fences(text: str) -> str:
 # degenerate repetition loop, which must not reach the user's prompt.
 MAX_COMMAND_CHARS = 400
 
+# C0 control characters and DEL, minus tab. Newlines never survive splitlines(),
+# so they are not listed. An ESC sequence in the readline buffer can redraw the
+# line, so what you read before pressing Enter need not be what runs —
+# `echo safe\x1b[2K\x1b[1G rm -rf ~` displays as one command and runs another.
+# It also hides the rest of the line from danger.py. Reject rather than strip:
+# a line needing this treatment is not a command we should be handing over.
+_CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+
+# Whole escape sequences, for explain output. Dropping the lone ESC byte would
+# neutralise the sequence but leave its parameters as visible litter ("[1mtext").
+# Covers CSI (\x1b[...), OSC (\x1b]... terminated by BEL or ST) and the short
+# two-character escapes.
+_ANSI = re.compile(
+    r"\x1b\[[0-9;?]*[ -/]*[@-~]"          # CSI: colours, cursor moves, erases
+    r"|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)"  # OSC: window title, clipboard
+    r"|\x1b[@-Z\\-_]"                      # two-character escapes
+)
+
 
 def _is_prose(line: str) -> bool:
     """Reject model prose that is not a command.
@@ -83,7 +101,7 @@ def command(text: str) -> str:
             continue
         if _COMMENTARY.match(line):
             continue
-        if _degenerate(line) or _is_prose(line):
+        if _degenerate(line) or _is_prose(line) or _CONTROL.search(line):
             return ""
         return line
     return ""
@@ -99,8 +117,13 @@ _MD_TICK = re.compile(r"`([^`]+)`")
 
 
 def prose(text: str) -> str:
-    """Clean explain output for a terminal: no fences, no markdown, no blank runs."""
-    text = strip_fences(text or "")
+    """Clean explain output for a terminal: no fences, no markdown, no blank runs.
+
+    Control characters are stripped rather than rejected: this text is printed,
+    never executed, so losing an escape sequence costs nothing while a discarded
+    explanation costs the user their answer.
+    """
+    text = _CONTROL.sub("", _ANSI.sub("", strip_fences(text or "")))
     text = _MD_BOLD.sub(lambda m: m.group(1) or m.group(2) or "", text)
     text = _MD_TICK.sub(r"\1", text)
     text = _MD_HEADING.sub("", text)
