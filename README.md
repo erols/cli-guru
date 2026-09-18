@@ -82,13 +82,14 @@ costs you two seconds rather than a restore from backup.
 
 ## Quick start
 
-Already have ollama running? Four steps:
+Already have ollama running?
 
 ```bash
 ollama pull qwen2.5-coder:1.5b
-git clone https://github.com/erols/cli-guru && pipx install ./cli-guru
-cli-guru check          # confirms ollama is reachable and the model is present
-cli-guru install        # adds the keybindings to your shell
+git clone https://github.com/erols/cli-guru
+pipx install ./cli-guru     # installs FROM the clone — the path is the argument
+cli-guru check              # confirms ollama is reachable and the model is present
+cli-guru install            # adds the keybindings to your shell
 ```
 
 Open a new terminal, type a question, press **Ctrl-X Ctrl-A**.
@@ -279,13 +280,23 @@ cli-guru is **not on PyPI yet**, so install it from a clone:
 
 ```bash
 git clone https://github.com/erols/cli-guru
-cd cli-guru
+pipx install ./cli-guru        # recommended — isolated, and puts cli-guru on PATH
+# or
+uv tool install ./cli-guru
+# or
+pip install --user ./cli-guru
+```
 
-pipx install .             # recommended — isolated, and puts cli-guru on PATH
-# or
-uv tool install .
-# or
-pip install --user .
+**The path argument is the whole command.** `pipx install` with nothing after it
+installs nothing, and the failure is easy to walk past — you only notice later,
+when `cli-guru` is not found. If you are already inside the clone, the equivalent
+is `pipx install .`, where that lone `.` is the argument and is easy to drop.
+Staying in the parent directory and naming `./cli-guru` is harder to get wrong.
+
+Confirm it actually landed before going further:
+
+```bash
+pipx list        # cli-guru should appear, with `- cli-guru` under it
 ```
 
 pipx and uv each give the tool its own virtualenv, which matters more than usual
