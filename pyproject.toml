@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cliai"
+version = "0.1.0"
+description = "Plain-language shell commands and man-page explanations from a local ollama model."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = ["shell", "cli", "ollama", "llm", "readline"]
+classifiers = [
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Utilities",
+]
+# No runtime dependencies, on purpose: startup latency is paid on every keypress.
+# See CLAUDE.md "Dependencies - why plain Python, not LangChain".
+dependencies = []
+
+[project.scripts]
+cliai = "cliai.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/erols/cli-guru"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Shell adapters ship inside the package so `cliai install` can find them
+# regardless of how the package was installed.
+[tool.setuptools.package-data]
+cliai = ["shell/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
