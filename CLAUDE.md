@@ -13,7 +13,7 @@ Two modes, nothing else:
 
 ## Status — read this first
 
-**Working and complete.** cli-guru is implemented, tested and verified end to end. 93 tests pass with
+**Working and complete.** cli-guru is implemented, tested and verified end to end. 112 tests pass with
 no network and no ollama: `PYTHONPATH=src python3 -m unittest discover -s tests`.
 
 ### Naming
@@ -64,37 +64,56 @@ sections below.
 6. **`qwen2.5-coder:1.5b` over `:3b`.** The 1.5B beats the 3B on both benchmarks, reproducibly.
 7. **Keys are `Ctrl-X Ctrl-A` / `Ctrl-X Ctrl-H`**, both unbound in a default shell. Never clobber.
 
-### Not done / open items
+### Distribution — settled facts
 
-- **zsh and PowerShell adapters are UNTESTED.** Written to the same contract as bash, but neither
-  shell exists in the dev sandbox. Test on a Mac and a Windows box before claiming support.
-- **Not a git repository.** `git init` is needed before `/ultrareview` or any PR workflow will run.
-  A `.gitignore` is already in place.
-- **Published.** `cli-guru` 0.2.0 is on PyPI (2026-09-18): wheel + sdist, zero dependencies,
-  `requires-python >=3.9`, MIT. `pipx install cli-guru` is now literally true, and the
-  clone-and-install path is documented as the way to run unreleased code. The GitHub repo is
-  public and the README's raw.githubusercontent.com logo URLs resolve, so the project page renders.
-  - **`cliai` on PyPI is someone else's package** — version 0.2.9 by "Baksi Li", unrelated to this
-    project. The pre-rename README told readers to `pipx install cliai`, which would have installed
-    a stranger's code under this tool's name. Checked 2026-09-18, and the reason the rename mattered
-    more than cosmetically.
-  - **Publishing gotchas, all hit on the first run.** Ubuntu's apt `twine` is too old to parse
-    `Metadata-Version: 2.4` and reports it as "missing required fields: Name, Version" — use pipx,
-    not apt, for Python tooling. A PyPI API token is `pypi-` + macaroon; a drag-select in the browser
-    clips the prefix and the upload 403s with "Invalid or non-existent authentication information".
-    A project-scoped token cannot authorise a project's first upload; use an account-scoped one.
-  - **Version numbers are permanent.** A released version can never be re-uploaded, even after
-    deleting the release. Bump `cli_guru.__version__` — `pyproject.toml` reads it via
-    `dynamic = ["version"]`, so the two cannot drift.
-- **Compound requests fail on every model tested** — "listening ports *with process names*" reliably
-  drops the `-p`. Possibly improvable by splitting the request; not attempted.
-- `bench/eval_explain.py` still scores the *model's* ability to spot destructive commands. That is
-  now handled by `danger.py`, so the script measures something the product no longer relies on.
+- **Published.** `cli-guru` is on PyPI (first release 2026-09-18): wheel + sdist, zero
+  dependencies, `requires-python >=3.9`, MIT. `pipx install cli-guru` is literally true;
+  clone-and-install is documented as the way to run unreleased code. The GitHub repo is public and
+  the README's raw.githubusercontent.com logo URLs resolve, so the project page renders.
+- **`cliai` on PyPI is someone else's package** — 0.2.9 by "Baksi Li", unrelated. The pre-rename
+  README told readers to `pipx install cliai`, which would have installed a stranger's code under
+  this tool's name. The reason the rename mattered more than cosmetically.
+- **Publishing gotchas, all hit on the first run.** Ubuntu's apt `twine` is too old to parse
+  `Metadata-Version: 2.4` and misreports it as "missing required fields: Name, Version" — Python
+  tooling goes in pipx, not apt. A PyPI token is `pypi-` + macaroon, and a drag-select in the
+  browser clips the prefix; the upload then 403s with "Invalid or non-existent authentication
+  information", which does not point at the cause. A project-scoped token cannot authorise a
+  project's first upload.
+- **Version numbers are permanent** and `pipx install` will not upgrade an existing install. Bump
+  `cli_guru.__version__` (`pyproject.toml` reads it via `dynamic = ["version"]`, so the two cannot
+  drift). PyPI freezes the long description per release: a README fix needs a new version. pip also
+  caches the index, so a fresh release can be invisible until
+  `pipx uninstall && pipx install --pip-args=--no-cache-dir`.
+
+### TODO
+
+Roughly in the order they will bite.
+
+1. **Verify macOS and Windows.** The zsh and PowerShell adapters have never run on a real box —
+   they are written to the same contract as bash and covered by the suite, but neither shell exists
+   in the dev sandbox. The README says so plainly, which is the honest position while it holds, not
+   a substitute for testing. macOS matters most: it ships **bash 3.2** (no `${var@Q}`, no
+   associative arrays) and **BSD userland**, where `sed -i`, `date`, `stat` and `find` all diverge
+   from GNU. Now that strangers can install it, this is the top item.
+2. **Write a CHANGELOG.** Two releases exist and "what changed in 0.2.1?" is answerable only from
+   git log. Add `CHANGELOG.md` before the next release and reference it from the README.
+3. **Trusted Publishing.** A GitHub Actions OIDC workflow removes the long-lived token from
+   releasing entirely — no paste, so no clipped prefix, and nothing to leak. Worth doing before the
+   release process gets used enough to be automated badly.
+4. **Add CI.** The suite needs no network and no ollama, so it runs anywhere. A matrix over
+   3.9–3.13 would also prove `requires-python >=3.9`, which is currently only checked by parsing
+   the sources against the 3.9 grammar.
+5. **`bench/eval_explain.py` measures the wrong thing.** It still scores the *model's* ability to
+   spot destructive commands, which `danger.py` took over. Rewrite it against `danger.py`'s rules
+   or delete it; as it stands it reports on something the product does not rely on.
+6. **Compound requests fail on every model tested** — "listening ports *with process names*"
+   reliably drops the `-p`. Possibly improvable by splitting the request into two calls; not
+   attempted, and it costs latency, so measure before adopting.
 
 ### Running things
 
 ```bash
-PYTHONPATH=src python3 -m unittest discover -s tests        # 93 tests, no ollama needed
+PYTHONPATH=src python3 -m unittest discover -s tests        # 112 tests, no ollama needed
 PYTHONPATH=src python3 -m cli_guru.cli check               # is ollama reachable
 OLLAMA_HOST=http://192.168.178.96:11434 python3 bench/eval_ask.py  qwen2.5-coder:1.5b 5
 OLLAMA_HOST=http://192.168.178.96:11434 python3 bench/eval_hard.py qwen2.5-coder:1.5b 5
@@ -110,7 +129,7 @@ environment, so they survive the folder rename.
 | Language | Python 3.9+, **stdlib only** at runtime | Zero-install, starts fast, no venv to activate before a keypress. See Dependencies |
 | Shells | bash, zsh, PowerShell via pluggable adapters | Ships to macOS (zsh) and Windows as well as Linux |
 | LLM transport | Ollama HTTP API, `POST /api/chat`, `stream: false` | Simplest correct path; no ollama Python package dependency |
-| Model | `qwen2.5-coder:3b` (default), `qwen2.5-coder:7b` for accuracy | Measured, see *Choosing a model*. Context is effectively unlimited for our purposes — never truncate context to "save tokens", truncate only to save latency |
+| Model | `qwen2.5-coder:1.5b` (default), `qwen2.5-coder:7b` for accuracy | Measured, see *Choosing a model*. Context is effectively unlimited for our purposes — never truncate context to "save tokens", truncate only to save latency |
 | Thinking | **`"think": false` on ask** | Measured: 7x slower and *not* more accurate (see Latency budget) |
 | Host | `http://localhost:11434`, override with `$OLLAMA_HOST` | Normal use is local. Ollama actually runs on the LAN box `192.168.178.96:11434` — see *Verified environment* |
 | Keybinding | **`Ctrl-X Ctrl-A`**, overridable via `$CLI_GURU_KEY` | Shared tool: bind only keys unbound in default bash, never displace an existing one |
@@ -182,6 +201,8 @@ src/cli_guru/
   backend.py        # the ONLY module that talks to a model
   context.py        # cwd/files/git/history/system + redaction
   manpage.py        # base command, man fetch, section-aware truncation
+  danger.py         # deterministic destructive-command detection, per segment
+  sanitise.py       # model output -> one safe command line; rejects control chars
   prompts.py        # the two system prompts
   install.py        # dotfile block: plan/diff/write/strip
   shell/            # cli-guru.bash, cli-guru.zsh, cli-guru.ps1  (canonical copies)
@@ -634,15 +655,22 @@ these rules:
 `~/.config/cli-guru/config.toml`, read with `tomllib`. Missing file is normal, not an error — every key
 has a working default.
 
+These are `config.DEFAULTS` verbatim. If you change one, change it here too — this block drifted
+from the code on four keys before anyone noticed.
+
 ```toml
-model = "nemotron-3-nano:4b"
+model = "qwen2.5-coder:1.5b"  # beats :3b on both benchmarks while being half the size
 host = "http://localhost:11434"
 think = false                 # ask mode. true costs ~4s for no accuracy gain — see Latency budget
+think_explain = false         # the man page does the grounding thinking would have to guess at
+keep_alive = "8h"             # keeps the model resident so the next keypress is warm; -1 pins it
 # keybinding is NOT configured here — it must be set before sourcing cli-guru.bash, via $CLI_GURU_KEY
 timeout = 20                  # seconds; a keypress must not hang the prompt
+timeout_explain = 45          # explain sends a man page, so a much larger prompt
 history_lines = 10
 max_files = 50
-max_man_chars = 12000
+include_tools = false         # listing tools cost qwen2.5-coder:3b 50 points — see Context
+max_man_chars = 6000
 explain_run_help = false      # true lets explain RUN `<cmd> --help` when no man page exists
 ```
 

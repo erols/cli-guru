@@ -78,12 +78,22 @@ def _parse_simple_toml(text: str) -> Dict[str, Any]:
             continue
         key, _, val = line.partition("=")
         key, val = key.strip(), val.strip()
-        # strip trailing inline comment outside of quotes
-        if not val.startswith(('"', "'")):
+        if val[:1] in ('"', "'"):
+            # Take what is between the quotes and drop anything after them, so a
+            # trailing comment does not end up inside the value. Splitting on "#"
+            # first instead would corrupt a value that legitimately contains one
+            # (a URL fragment, a colour). Both forms appear in the documented
+            # config, and getting this wrong yields a model name like
+            # `"qwen2.5-coder:1.5b"  # beats :3b`, which ollama then 404s on.
+            quote = val[0]
+            closing = val.find(quote, 1)
+            if closing != -1:
+                out[key] = val[1:closing]
+                continue
+            val = val[1:]  # unterminated quote — treat the remainder as bare
+        else:
             val = val.split("#", 1)[0].strip()
-        if len(val) >= 2 and val[0] == val[-1] and val[0] in "\"'":
-            out[key] = val[1:-1]
-        elif val.lower() in _BOOL:
+        if val.lower() in _BOOL:
             out[key] = _BOOL[val.lower()]
         elif re.fullmatch(r"-?\d+", val):
             out[key] = int(val)
