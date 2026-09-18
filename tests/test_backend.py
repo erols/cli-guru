@@ -9,7 +9,7 @@ import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from cliai.backend import BackendError, OllamaBackend
+from cli_guru.backend import BackendError, OllamaBackend
 
 
 class _Handler(BaseHTTPRequestHandler):

@@ -6,7 +6,7 @@ shows up as a pass RATE rather than a single lucky answer.
 """
 import os, pathlib, json, re, statistics, sys, time, urllib.request
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "src"))
-from cliai import context, prompts, sanitise
+from cli_guru import context, prompts, sanitise
 
 HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 REPEATS = int(sys.argv[2]) if len(sys.argv) > 2 else 3

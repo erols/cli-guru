@@ -2,7 +2,7 @@
 
 import unittest
 
-from cliai import sanitise
+from cli_guru import sanitise
 
 
 class TestCommand(unittest.TestCase):

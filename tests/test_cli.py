@@ -5,8 +5,8 @@ import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from unittest import mock
 
-from cliai import cli
-from cliai.backend import BackendError
+from cli_guru import cli
+from cli_guru.backend import BackendError
 
 
 def run(argv, content="ls -la", error=None):

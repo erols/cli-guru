@@ -1,6 +1,6 @@
 import unittest
 
-from cliai import manpage
+from cli_guru import manpage
 
 # A trimmed real-shaped man page. Checked in so tests never shell out to `man`,
 # which differs between GNU and BSD and may be absent entirely.

@@ -6,7 +6,7 @@ read-only commands. Neither is acceptable, so cliai decides deterministically.
 
 import unittest
 
-from cliai import danger
+from cli_guru import danger
 
 DESTRUCTIVE = [
     "rm -rf /var/log/*",

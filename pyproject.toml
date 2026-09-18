@@ -22,7 +22,7 @@ classifiers = [
 dependencies = []
 
 [project.scripts]
-cliai = "cliai.cli:main"
+cliai = "cli_guru.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/erols/cli-guru"
@@ -36,7 +36,7 @@ where = ["src"]
 # Shell adapters ship inside the package so `cliai install` can find them
 # regardless of how the package was installed.
 [tool.setuptools.package-data]
-cliai = ["shell/*"]
+cli_guru = ["shell/*"]
 
 [tool.ruff]
 line-length = 100

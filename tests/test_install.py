@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from cliai import install
+from cli_guru import install
 
 ORIGINAL = 'export PATH=/usr/bin\nalias ll="ls -l"\n'
 

@@ -18,19 +18,21 @@ no network and no ollama: `PYTHONPATH=src python3 -m unittest discover -s tests`
 
 ### Naming
 
-The **folder** was renamed `cliai` → `cli-guru` (2026-09-18). The **tool** is still called `cliai`
-everywhere: package, `cliai` command, `~/.config/cliai/`, `CLIAI_*` env vars, `__cliai_*` shell
-functions, and the `# >>> cliai >>>` rc-file markers. This is deliberate, not an oversight — only
-the directory was renamed.
+The **folder** was renamed `cliai` → `cli-guru` (2026-09-18), and the **import package**
+`src/cliai/` → `src/cli_guru/` (2026-09-18). The *importable* name must use an underscore —
+`cli-guru` is not a valid Python identifier. The **tool** is still called `cliai` everywhere:
+distribution name, `cliai` command, `~/.config/cliai/`, `CLIAI_*` env vars, `__cliai_*` shell
+functions, and the `# >>> cliai >>>` rc-file markers. This is deliberate, not an oversight.
 
 **The artwork in `logo/` is branded `cli-guru`**, and its own usage guide suggests pairing it with
 the heading `# cli-guru`. Together with the folder rename that is fairly strong evidence the project
 is meant to become cli-guru — but the code has not been renamed, so the README header now shows a
 cli-guru lockup above instructions that all say `cliai`. That inconsistency is known, not missed.
 
-If the tool should be renamed too, it is a mechanical change across `pyproject.toml` (name +
-`[project.scripts]`), `src/cliai/` → `src/cli_guru/`, the `CLIAI_*` variable names, the marker
-strings in `install.py`, the `__cliai_*` function names in `src/cliai/shell/*`, and both docs.
+If the tool should be renamed too, what remains is `pyproject.toml` (`name`, and the
+`[project.scripts]` key itself), the `CLIAI_*` variable names, the marker strings in `install.py`,
+the `__cliai_*` function names in `src/cli_guru/shell/*`, the config directory, and both docs.
+The package rename is already done.
 Anyone already running `cliai install` must `cliai uninstall` **before** the rename, or the old
 marker block is orphaned in their rc file.
 
@@ -76,7 +78,7 @@ sections below.
 
 ```bash
 PYTHONPATH=src python3 -m unittest discover -s tests        # 76 tests, no ollama needed
-PYTHONPATH=src python3 -m cliai.cli check                   # is ollama reachable
+PYTHONPATH=src python3 -m cli_guru.cli check               # is ollama reachable
 OLLAMA_HOST=http://192.168.178.96:11434 python3 bench/eval_ask.py  qwen2.5-coder:1.5b 5
 OLLAMA_HOST=http://192.168.178.96:11434 python3 bench/eval_hard.py qwen2.5-coder:1.5b 5
 ```
@@ -157,7 +159,7 @@ Other sharing rules that follow from the same principle:
 ## Layout
 
 ```
-src/cliai/
+src/cli_guru/
   cli.py            # argparse, the two commands, wiring
   config.py         # defaults -> file -> env -> flag
   backend.py        # the ONLY module that talks to a model
@@ -513,9 +515,9 @@ Branch on `platform.system()`, never on "is there a `/etc`":
 ## Packaging & install
 
 Shipped as a standard Python package: `pyproject.toml`, console entry point
-`cliai = "cliai.cli:main"`, installed with `pipx install cliai` or `uv tool install cliai`.
+`cliai = "cli_guru.cli:main"`, installed with `pipx install cliai` or `uv tool install cliai`.
 
-Once there are modules, the layout is `src/cliai/` with `cli.py`, `context.py`, `backend.py`,
+Once there are modules, the layout is `src/cli_guru/` with `cli.py`, `context.py`, `backend.py`,
 `manpage.py`, `prompts.py`. Keep the single file until it earns the split.
 
 ### `cliai install`

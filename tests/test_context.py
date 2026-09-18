@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from cliai import context
+from cli_guru import context
 
 
 class TestRedaction(unittest.TestCase):

@@ -2,7 +2,7 @@
 """Isolate whether the tools line / prompt wording causes the observed failures."""
 import os, pathlib, json, re, sys, time, urllib.request
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "src"))
-from cliai import context, prompts, sanitise
+from cli_guru import context, prompts, sanitise
 HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434"); MODEL=sys.argv[1]; R=3
 
 BASE = prompts.ASK_SYSTEM

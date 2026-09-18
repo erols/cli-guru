@@ -584,7 +584,7 @@ PYTHONPATH=src python3 -m unittest discover -s tests
 HTTP server, so the suite passes on a machine that has never installed ollama.
 
 ```
-src/cliai/
+src/cli_guru/
   cli.py        argparse, the two commands, wiring
   backend.py    the only module that talks to a model
   context.py    directory/git/history/system context + secret redaction

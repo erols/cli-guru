@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest import mock
 
-from cliai import config
+from cli_guru import config
 
 
 class TestNormaliseHost(unittest.TestCase):
