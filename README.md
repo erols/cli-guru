@@ -677,6 +677,12 @@ bench/          model and prompt benchmarking harnesses
 `CLAUDE.md` holds the design decisions and — more usefully — the measurements
 behind them, including several cases where the obvious choice was wrong.
 
+- [`docs/container-testing.md`](docs/container-testing.md) — a throwaway LXC
+  container is the closest thing to a stranger's machine, and exercises paths a
+  unit test cannot reach
+- [`docs/demo-script.md`](docs/demo-script.md) — vetted questions and commands
+  for a recorded demo, and the ones that fail
+
 ## License
 
 MIT

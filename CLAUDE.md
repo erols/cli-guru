@@ -208,6 +208,7 @@ src/cli_guru/
   install.py        # dotfile block: plan/diff/write/strip
   shell/            # cli-guru.bash, cli-guru.zsh, cli-guru.ps1  (canonical copies)
 tests/              # stdlib unittest, ollama stubbed
+docs/               # demo-script.md (recording a demo), container-testing.md
 ```
 
 The adapters live **inside the package**, not at the repo root, so an installed wheel can find them
@@ -732,6 +733,15 @@ No stack traces reach the user. A traceback in the readline buffer is the worst 
 - Output sanitising: table-driven over the ways models wrap output (` ```bash `, backticks, `$ `
   prefix, trailing prose) — this is the highest-value test in the suite
 - Redaction: assert known secret shapes never survive into the assembled prompt
+
+**Beyond the suite.** `docs/container-testing.md` covers what a unit test cannot: keybindings in a
+shell with no rc block and no history, the ungrounded path on an image with no `man-db`, the silent
+no-op when sourced non-interactively, and the no-controlling-terminal fallback. A container is
+still Linux, so it says nothing about the macOS and Windows adapters — see the TODO.
+
+`docs/demo-script.md` holds vetted questions and commands for a recorded demo, with the ones that
+fail and why. Note its first warning: answers depend on the directory, because the file listing is
+in the prompt, so a demo needs a controlled stage to be reproducible.
 
 ## Conventions
 
