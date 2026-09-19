@@ -8,3 +8,7 @@ build/
 .pytest_cache/
 .ruff_cache/
 *.cliai.bak
+
+# Local dev widget (see cgdev.bash) — not shipped; the real adapters live in
+# src/cli_guru/shell/ and two copies would drift.
+cgdev.bash
