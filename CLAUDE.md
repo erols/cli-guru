@@ -13,7 +13,7 @@ Two modes, nothing else:
 
 ## Status — read this first
 
-**Working and complete.** cli-guru is implemented, tested and verified end to end. 125 tests pass with
+**Working and complete.** cli-guru is implemented, tested and verified end to end. 133 tests pass with
 no network and no ollama: `PYTHONPATH=src python3 -m unittest discover -s tests`.
 
 ### Naming
@@ -113,7 +113,7 @@ Roughly in the order they will bite.
 ### Running things
 
 ```bash
-PYTHONPATH=src python3 -m unittest discover -s tests        # 125 tests, no ollama needed
+PYTHONPATH=src python3 -m unittest discover -s tests        # 133 tests, no ollama needed
 PYTHONPATH=src python3 -m cli_guru.cli check               # is ollama reachable
 OLLAMA_HOST=http://192.168.178.96:11434 python3 bench/eval_ask.py  qwen2.5-coder:1.5b 5
 OLLAMA_HOST=http://192.168.178.96:11434 python3 bench/eval_hard.py qwen2.5-coder:1.5b 5

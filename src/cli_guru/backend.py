@@ -24,6 +24,26 @@ class BackendError(Exception):
 MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 
 
+def _tagged(name: str) -> str:
+    """Resolve a reference the way ollama does: no tag means `:latest`.
+
+    Only the final path segment is inspected, so the port in a registry host
+    (`localhost:5000/my-model`) is not mistaken for a tag.
+    """
+    return name if ":" in name.rsplit("/", 1)[-1] else f"{name}:latest"
+
+
+def _pulled(model: str, names: list) -> bool:
+    """Is `model` among the pulled tags?
+
+    `check` used to compare the raw strings, so a configured `qwen2.5-coder`
+    was reported as not pulled even with `qwen2.5-coder:latest` present — while
+    `ask` worked fine, because ollama resolves the tag itself. A diagnostic
+    that contradicts the thing it diagnoses is worse than no diagnostic.
+    """
+    return _tagged(model) in {_tagged(n) for n in names if n}
+
+
 def _read_capped(resp) -> bytes:
     data = resp.read(MAX_RESPONSE_BYTES + 1)
     if len(data) > MAX_RESPONSE_BYTES:
@@ -118,7 +138,7 @@ class OllamaBackend:
                 f"no ollama at {self.host} (start it with: ollama serve, or set OLLAMA_HOST)"
             ) from exc
         names = [m.get("name", "") for m in tags.get("models", [])]
-        if self.model not in names:
+        if not _pulled(self.model, names):
             available = ", ".join(names) or "none"
             raise BackendError(
                 f"model {self.model!r} not pulled (available: {available}; "

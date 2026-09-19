@@ -31,19 +31,25 @@ class _Handler(BaseHTTPRequestHandler):
         type(self).last_request = self.received
         self._send(type(self).reply, type(self).status)
 
+    tags = [{"name": "test-model:1b"}]
+
     def do_GET(self):
-        self._send({"models": [{"name": "test-model:1b"}]})
+        self._send({"models": type(self).tags})
 
     def log_message(self, *args):
         pass
 
 
-class BackendTestCase(unittest.TestCase):
+class _ServerMixin:
+    """Stub-server lifecycle, shared WITHOUT inheriting anyone's test methods —
+    subclassing a TestCase to reuse setUp silently re-runs its whole suite."""
+
     def setUp(self):
         _Handler.reply = {
             "message": {"content": "ls -la", "thinking": "reasoning here"}
         }
         _Handler.status = 200
+        _Handler.tags = [{"name": "test-model:1b"}]
         self.server = HTTPServer(("127.0.0.1", 0), _Handler)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
@@ -53,6 +59,8 @@ class BackendTestCase(unittest.TestCase):
         self.server.shutdown()
         self.server.server_close()
 
+
+class BackendTestCase(_ServerMixin, unittest.TestCase):
     def test_returns_content_and_thinking_separately(self):
         content, thinking = OllamaBackend(self.host, "test-model:1b").chat("sys", "user")
         self.assertEqual(content, "ls -la")
@@ -119,6 +127,50 @@ class ResponseSizeTestCase(unittest.TestCase):
 
     def test_normal_response_passes_through(self):
         self.assertEqual(backend._read_capped(self._Normal()), b'{"ok": 1}')
+
+
+class ModelNameResolutionTestCase(unittest.TestCase):
+    """`check` must resolve names the way ollama does.
+
+    It compared raw strings, so a configured `qwen2.5-coder` was reported as
+    not pulled even with `qwen2.5-coder:latest` present — while `ask` worked,
+    because ollama resolves the tag itself. A diagnostic that contradicts the
+    thing it diagnoses is worse than no diagnostic.
+    """
+
+    def test_bare_name_resolves_to_latest(self):
+        self.assertEqual(backend._tagged("qwen2.5-coder"), "qwen2.5-coder:latest")
+
+    def test_explicit_tag_is_left_alone(self):
+        self.assertEqual(backend._tagged("qwen2.5-coder:1.5b"), "qwen2.5-coder:1.5b")
+
+    def test_registry_port_is_not_a_tag(self):
+        """The colon in `localhost:5000/model` belongs to the host."""
+        self.assertEqual(backend._tagged("localhost:5000/m"), "localhost:5000/m:latest")
+
+    def test_bare_name_matches_latest_tag(self):
+        self.assertTrue(backend._pulled("qwen2.5-coder", ["qwen2.5-coder:latest"]))
+
+    def test_bare_name_does_not_match_a_versioned_tag(self):
+        """ollama would fail here too, so agreeing with it is the point."""
+        self.assertFalse(backend._pulled("qwen2.5-coder", ["qwen2.5-coder:1.5b"]))
+
+    def test_empty_tag_list(self):
+        self.assertFalse(backend._pulled("anything", []))
+
+
+class CheckResolutionTestCase(_ServerMixin, unittest.TestCase):
+    def test_check_accepts_a_bare_name_when_latest_is_pulled(self):
+        _Handler.tags = [{"name": "test-model:latest"}]
+        out = OllamaBackend(self.host, "test-model").check()
+        self.assertIn("test-model", out)
+
+    def test_check_still_rejects_a_genuinely_missing_model(self):
+        _Handler.tags = [{"name": "test-model:1b"}]
+        with self.assertRaises(BackendError) as ctx:
+            OllamaBackend(self.host, "other-model").check()
+        self.assertIn("not pulled", str(ctx.exception))
+        self.assertIn("test-model:1b", str(ctx.exception), "must list what IS available")
 
 
 if __name__ == "__main__":
