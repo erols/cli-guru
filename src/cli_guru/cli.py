@@ -16,13 +16,23 @@ from .backend import BackendError, OllamaBackend
 
 
 def _err(msg: str) -> None:
+    # Flush stdout first: it is block-buffered when piped while stderr is not,
+    # so without this an error can surface above output that logically preceded
+    # it — confusing in a terminal, worse in a log.
+    sys.stdout.flush()
     print(f"cli-guru: {msg}", file=sys.stderr)
 
 
-def _backend(cfg, timeout_key: str = "timeout") -> OllamaBackend:
+def _model_for(cfg, model_key: str = "model") -> str:
+    """`model_explain` falls back to `model` when unset, so the default install
+    talks to exactly one model and pulls nothing extra."""
+    return str(cfg.get(model_key) or cfg["model"])
+
+
+def _backend(cfg, timeout_key: str = "timeout", model_key: str = "model") -> OllamaBackend:
     timeout = int(cfg.get(timeout_key, cfg["timeout"]))
     return OllamaBackend(
-        cfg["host"], cfg["model"], timeout, str(cfg.get("keep_alive", "8h"))
+        cfg["host"], _model_for(cfg, model_key), timeout, str(cfg.get("keep_alive", "8h"))
     )
 
 
@@ -131,7 +141,7 @@ def cmd_explain(args, cfg) -> int:
 
     try:
         with ui.Activity("thinking"):
-            raw, thinking = _backend(cfg, "timeout_explain").chat(
+            raw, thinking = _backend(cfg, "timeout_explain", "model_explain").chat(
                 prompts.EXPLAIN_SYSTEM, user, think=bool(cfg["think_explain"]), num_predict=700
             )
     except BackendError as exc:
@@ -170,6 +180,12 @@ def cmd_explain(args, cfg) -> int:
 def cmd_check(args, cfg) -> int:
     try:
         print(_backend(cfg).check())
+        # A second model is a second way to be broken, and it would only show up
+        # on an explain keypress. Verify it here instead.
+        explain_model = _model_for(cfg, "model_explain")
+        if explain_model != cfg["model"]:
+            _backend(cfg, "timeout", "model_explain").check()
+            print(f"ok: explain model {explain_model} present")
     except BackendError as exc:
         _err(str(exc))
         return 1
@@ -284,7 +300,12 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     parser = build_parser()
     args = parser.parse_args(argv)
-    cfg = config.load({"model": args.model, "host": args.host})
+    overrides = {"model": args.model, "host": args.host}
+    if args.model:
+        # An explicit flag beats a configured model_explain, which would
+        # otherwise quietly ignore what the user just asked for.
+        overrides["model_explain"] = args.model
+    cfg = config.load(overrides)
     try:
         return int(args.func(args, cfg))
     except KeyboardInterrupt:

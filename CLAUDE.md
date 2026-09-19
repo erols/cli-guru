@@ -13,7 +13,7 @@ Two modes, nothing else:
 
 ## Status — read this first
 
-**Working and complete.** cli-guru is implemented, tested and verified end to end. 133 tests pass with
+**Working and complete.** cli-guru is implemented, tested and verified end to end. 139 tests pass with
 no network and no ollama: `PYTHONPATH=src python3 -m unittest discover -s tests`.
 
 ### Naming
@@ -113,7 +113,7 @@ Roughly in the order they will bite.
 ### Running things
 
 ```bash
-PYTHONPATH=src python3 -m unittest discover -s tests        # 133 tests, no ollama needed
+PYTHONPATH=src python3 -m unittest discover -s tests        # 139 tests, no ollama needed
 PYTHONPATH=src python3 -m cli_guru.cli check               # is ollama reachable
 OLLAMA_HOST=http://192.168.178.96:11434 python3 bench/eval_ask.py  qwen2.5-coder:1.5b 5
 OLLAMA_HOST=http://192.168.178.96:11434 python3 bench/eval_hard.py qwen2.5-coder:1.5b 5
@@ -672,6 +672,7 @@ from the code on four keys before anyone noticed.
 
 ```toml
 model = "qwen2.5-coder:1.5b"  # beats :3b on both benchmarks while being half the size
+model_explain = ""            # empty = use `model`; see below before setting it
 host = "http://localhost:11434"
 think = false                 # ask mode. true costs ~4s for no accuracy gain — see Latency budget
 think_explain = false         # the man page does the grounding thinking would have to guess at
@@ -686,7 +687,27 @@ max_man_chars = 6000
 explain_run_help = false      # true lets explain RUN `<cmd> --help` when no man page exists
 ```
 
-Precedence: CLI flag > env (`CLI_GURU_MODEL`, `OLLAMA_HOST`) > config file > default.
+Precedence: CLI flag > env (`CLI_GURU_MODEL`, `CLI_GURU_MODEL_EXPLAIN`, `OLLAMA_HOST`) > config
+file > default. An explicit `--model` sets **both** models for that invocation, so a configured
+`model_explain` cannot quietly ignore what the user just asked for.
+
+### A bigger model for explain
+
+`model_explain` is empty by default, meaning "use `model`", so a default install talks to one model
+and pulls nothing extra. It exists because the two modes have genuinely different budgets: ask is
+the ~200 ms path a keypress waits on, while explain already has a 45 s timeout and runs ~8 s anyway
+because a man page is a much larger prompt.
+
+Measured on `explain "sudo apt install ./vhs_0.12.0_amd64.deb"`: `qwen2.5-coder:1.5b` invented a
+`-s` flag on one run, restated the command without explaining it on another, and invented `dpkg`
+and `-i` on a third — none of which appear in the command or in `man apt`. `qwen2.5-coder:7b` was
+correct on both runs, one of them saying "no flags are used in this command". Grounding was working
+throughout; the small model simply attributes flags it has seen elsewhere.
+
+**The cost is RAM, not latency.** `keep_alive` holds both models resident: 2.12 G + 6.92 G rather
+than 2.12 G. On a CPU-only box that is the tradeoff to weigh, and it is why this is off by default.
+`cli-guru check` verifies both models when they differ, because a broken second model would
+otherwise only surface on an explain keypress.
 
 ## Error handling
 

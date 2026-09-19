@@ -1,6 +1,7 @@
 """End-to-end CLI tests with the backend faked. No model is contacted."""
 
 import io
+import os
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from unittest import mock
@@ -20,10 +21,11 @@ class _TtyStringIO(io.StringIO):
 def run(argv, content="ls -la", error=None, tty=False):
     out = _TtyStringIO() if tty else io.StringIO()
     err = io.StringIO()
+    models = []
 
     class Fake:
         def __init__(self, *a, **k):
-            pass
+            models.append(a[1] if len(a) > 1 else k.get("model"))
 
         def chat(self, *a, **k):
             if error:
@@ -42,6 +44,7 @@ def run(argv, content="ls -la", error=None, tty=False):
             mock.patch.object(cli.ui, "Activity", _NoActivity):
         with redirect_stdout(out), redirect_stderr(err):
             code = cli.main(argv)
+    run.models = models
     return code, out.getvalue(), err.getvalue()
 
 
@@ -222,6 +225,51 @@ class ExplainDelimiterTestCase(unittest.TestCase):
         self.assertTrue(lines[0].startswith("####"))
         self.assertTrue(lines[1].startswith("WARNING:"))
         self.assertTrue(lines[-1].startswith("####"))
+
+
+class PerModeModelTestCase(unittest.TestCase):
+    """explain may use a bigger model than ask.
+
+    explain already has a 45s timeout against ask's 20s and runs ~8s anyway,
+    whereas ask is the ~200ms path a keypress waits on. Measured: 1.5b invented
+    a `-s` flag for `sudo apt install ./x.deb`, then invented dpkg and `-i`;
+    7b was correct. Off by default — the cost is holding both models resident.
+    """
+
+    def test_defaults_to_one_model_for_both_modes(self):
+        run(["ask", "x"])
+        self.assertEqual(run.models, ["qwen2.5-coder:1.5b"])
+        run(["explain", "ls"])
+        self.assertEqual(run.models, ["qwen2.5-coder:1.5b"])
+
+    def test_explain_uses_model_explain_when_set(self):
+        with mock.patch.dict(os.environ, {"CLI_GURU_MODEL_EXPLAIN": "big:7b"}):
+            run(["explain", "ls"])
+            self.assertEqual(run.models, ["big:7b"])
+
+    def test_ask_is_unaffected_by_model_explain(self):
+        """The whole point is that the keypress path stays fast."""
+        with mock.patch.dict(os.environ, {"CLI_GURU_MODEL_EXPLAIN": "big:7b"}):
+            run(["ask", "x"])
+            self.assertEqual(run.models, ["qwen2.5-coder:1.5b"])
+
+    def test_explicit_flag_governs_both_modes(self):
+        """--model must not be quietly ignored by a configured model_explain."""
+        with mock.patch.dict(os.environ, {"CLI_GURU_MODEL_EXPLAIN": "big:7b"}):
+            run(["--model", "chosen:1b", "explain", "ls"])
+            self.assertEqual(run.models, ["chosen:1b"])
+
+    def test_check_verifies_both_models_when_they_differ(self):
+        """A second model is a second way to break, and it would only show up on
+        an explain keypress."""
+        with mock.patch.dict(os.environ, {"CLI_GURU_MODEL_EXPLAIN": "big:7b"}):
+            _, out, _ = run(["check"])
+        self.assertEqual(run.models, ["qwen2.5-coder:1.5b", "big:7b"])
+        self.assertIn("explain model big:7b", out)
+
+    def test_check_does_not_double_report_one_model(self):
+        _, out, _ = run(["check"])
+        self.assertNotIn("explain model", out)
 
 
 if __name__ == "__main__":

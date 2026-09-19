@@ -522,6 +522,7 @@ Every key is optional; these are the defaults.
 
 ```toml
 model = "qwen2.5-coder:1.5b"
+model_explain = ""         # empty = use `model`; see below
 host = "http://localhost:11434"
 keep_alive = "8h"          # keep the model in RAM; -1 pins it until ollama restarts
 
@@ -542,6 +543,16 @@ explain_run_help = false   # see below
 
 Environment: `CLI_GURU_MODEL`, `OLLAMA_HOST`, `CLI_GURU_TIMEOUT`, `CLI_GURU_THINK`,
 `CLI_GURU_KEY`, `CLI_GURU_KEY_EXPLAIN`, `CLI_GURU_FORCE_KEY`.
+
+> **`model_explain`** lets `explain` use a bigger model than `ask`. The two have
+> different budgets: `ask` is the ~200ms path you wait on at a keypress, while
+> `explain` already takes several seconds because a man page is a large prompt.
+> A small model will confidently describe flags that are not in your command —
+> `qwen2.5-coder:1.5b` explained `sudo apt install ./x.deb` by inventing a `-s`
+> flag, and on another run invented `dpkg -i`. `qwen2.5-coder:7b` got it right.
+> Empty by default, because the cost is RAM: both models stay resident, so
+> roughly 9GB instead of 2GB. Set it only if you have the memory to spare, and
+> run `cli-guru check` afterwards — it verifies both models.
 
 > **`explain_run_help`** lets `explain` fall back to running `<cmd> --help`
 > when no man page exists. Off by default, deliberately: you reach for `explain`
@@ -646,7 +657,7 @@ git clone https://github.com/erols/cli-guru && cd cli-guru
 PYTHONPATH=src python3 -m unittest discover -s tests
 ```
 
-133 tests, no network and no ollama required — the model is stubbed with a local
+139 tests, no network and no ollama required — the model is stubbed with a local
 HTTP server, so the suite passes on a machine that has never installed ollama.
 
 ```

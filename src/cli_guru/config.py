@@ -19,6 +19,15 @@ DEFAULTS: Dict[str, Any] = {
     # 1.5b beats 3b on BOTH sets while being smaller and 2x faster, so 3b has
     # no niche. Default to 1.5b; 7b is the accuracy option for harder requests.
     "model": "qwen2.5-coder:1.5b",
+    # Empty means "use `model`". explain can afford a bigger model in a way ask
+    # cannot: it already has a 45s timeout against ask's 20s and runs ~8s
+    # anyway, because a man page is a much larger prompt, whereas ask is the
+    # ~200ms path a keypress waits on. Measured on qwen2.5-coder:1.5b,
+    # `explain "sudo apt install ./x.deb"` invented a `-s` flag, then invented
+    # dpkg and `-i`, on three runs; :7b was correct twice and said "no flags are
+    # used in this command". Left empty by default because the cost is RAM:
+    # keep_alive holds BOTH models resident, 2.12G + 6.92G rather than 2.12G.
+    "model_explain": "",
     "host": "http://localhost:11434",
     "think": False,          # ask: measured 7x slower, no accuracy gain
     # explain: thinking generated 383 extra tokens -> 14.9s vs 3.7s, and the
@@ -135,6 +144,7 @@ def load(overrides: Dict[str, Any] | None = None) -> Dict[str, Any]:
 
     env_map = {
         "model": "CLI_GURU_MODEL",
+        "model_explain": "CLI_GURU_MODEL_EXPLAIN",
         "host": "OLLAMA_HOST",
         "timeout": "CLI_GURU_TIMEOUT",
         "think": "CLI_GURU_THINK",
