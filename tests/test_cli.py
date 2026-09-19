@@ -9,8 +9,17 @@ from cli_guru import cli
 from cli_guru.backend import BackendError
 
 
-def run(argv, content="ls -la", error=None):
-    out, err = io.StringIO(), io.StringIO()
+class _TtyStringIO(io.StringIO):
+    """Captures stdout while still reporting as a terminal, so the tty-only
+    decoration paths are reachable under redirect_stdout."""
+
+    def isatty(self):
+        return True
+
+
+def run(argv, content="ls -la", error=None, tty=False):
+    out = _TtyStringIO() if tty else io.StringIO()
+    err = io.StringIO()
 
     class Fake:
         def __init__(self, *a, **k):
@@ -26,10 +35,25 @@ def run(argv, content="ls -la", error=None):
                 raise error
             return "ok: fake"
 
-    with mock.patch.object(cli, "OllamaBackend", Fake):
+    # The spinner writes to /dev/tty, which during a test run is the developer's
+    # own terminal. Stub it so the suite stays silent and these tests stay about
+    # stdout/stderr; ui.Activity itself is covered in test_ui.py.
+    with mock.patch.object(cli, "OllamaBackend", Fake), \
+            mock.patch.object(cli.ui, "Activity", _NoActivity):
         with redirect_stdout(out), redirect_stderr(err):
             code = cli.main(argv)
     return code, out.getvalue(), err.getvalue()
+
+
+class _NoActivity:
+    def __init__(self, *a, **k):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
 
 
 class AskTestCase(unittest.TestCase):
@@ -174,6 +198,30 @@ class EmptyAskTestCase(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertEqual(out, "")
         self.assertIn("type your question on the line first", err)
+
+
+class ExplainDelimiterTestCase(unittest.TestCase):
+    """Fence the answer off from whatever is already on screen — but only for a
+    human. `cli-guru explain ... > notes.md` must stay plain prose."""
+
+    def test_no_rules_when_piped(self):
+        _, out, _ = run(["explain", "ls", "-la"], content="lists files")
+        self.assertNotIn("####", out)
+        self.assertEqual(out.strip(), "lists files")
+
+    def test_rules_and_command_shown_at_a_terminal(self):
+        _, out, _ = run(["explain", "tar", "-xzvf", "f.tgz"], content="extracts it", tty=True)
+        self.assertIn("tar -xzvf f.tgz", out)
+        self.assertTrue(out.startswith("####"))
+        self.assertTrue(out.rstrip().endswith("#"))
+        self.assertIn("extracts it", out)
+
+    def test_warning_sits_inside_the_fence(self):
+        _, out, _ = run(["explain", "git", "reset", "--hard"], content="resets", tty=True)
+        lines = [ln for ln in out.splitlines() if ln.strip()]
+        self.assertTrue(lines[0].startswith("####"))
+        self.assertTrue(lines[1].startswith("WARNING:"))
+        self.assertTrue(lines[-1].startswith("####"))
 
 
 if __name__ == "__main__":

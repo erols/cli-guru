@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
-from . import __version__, config, context, danger, install, manpage, prompts, sanitise
+from . import __version__, config, context, danger, install, manpage, prompts, sanitise, ui
 from .backend import BackendError, OllamaBackend
 
 
@@ -57,13 +57,11 @@ def _read_question() -> Optional[str]:
             return input("cli-guru> ").strip()
         except (EOFError, KeyboardInterrupt):
             return ""
+    tty_out, tty_in = ui.open_tty("w"), ui.open_tty("r")
+    if tty_out is None or tty_in is None:
+        return None  # no terminal to ask on — the caller says so and exits
     try:
-        # Two handles, not one "r+": /dev/tty is a character device and is not
-        # seekable, so r+ raises io.UnsupportedOperation (an OSError subclass,
-        # so it would be swallowed below and look like "no terminal").
-        # No /dev/tty on Windows, and none in a container or some ssh/tmux
-        # sessions; OSError there means "cannot ask", not "user said nothing".
-        with open("/dev/tty", "w") as tty_out, open("/dev/tty", "r") as tty_in:
+        with tty_out, tty_in:
             tty_out.write("cli-guru> ")
             tty_out.flush()
             return (tty_in.readline() or "").strip()
@@ -88,9 +86,10 @@ def cmd_ask(args, cfg) -> int:
         print(f"--- system ---\n{prompts.ASK_SYSTEM}\n--- user ---\n{user}", file=sys.stderr)
 
     try:
-        raw, thinking = _backend(cfg).chat(
-            prompts.ASK_SYSTEM, user, think=bool(cfg["think"]), num_predict=160
-        )
+        with ui.Activity("thinking"):
+            raw, thinking = _backend(cfg).chat(
+                prompts.ASK_SYSTEM, user, think=bool(cfg["think"]), num_predict=160
+            )
     except BackendError as exc:
         _err(str(exc))
         return 1
@@ -121,7 +120,8 @@ def cmd_explain(args, cfg) -> int:
     cmd, sub = manpage.base_command(line)
     # Opt-in only: fetching docs must not execute the command under explanation.
     run_help = bool(getattr(args, "run_help", False)) or bool(cfg.get("explain_run_help"))
-    doc, source = manpage.fetch(cmd, sub, run_help=run_help)
+    with ui.Activity(f"reading man {cmd}" if cmd else "reading docs"):
+        doc, source = manpage.fetch(cmd, sub, run_help=run_help)
     if doc:
         doc = manpage.truncate(doc, int(cfg["max_man_chars"]))
 
@@ -130,9 +130,10 @@ def cmd_explain(args, cfg) -> int:
         print(f"--- source: {source} ({len(doc or '')} chars) ---", file=sys.stderr)
 
     try:
-        raw, thinking = _backend(cfg, "timeout_explain").chat(
-            prompts.EXPLAIN_SYSTEM, user, think=bool(cfg["think_explain"]), num_predict=700
-        )
+        with ui.Activity("thinking"):
+            raw, thinking = _backend(cfg, "timeout_explain").chat(
+                prompts.EXPLAIN_SYSTEM, user, think=bool(cfg["think_explain"]), num_predict=700
+            )
     except BackendError as exc:
         _err(str(exc))
         return 1
@@ -148,11 +149,19 @@ def cmd_explain(args, cfg) -> int:
     # destructive commands when this was left to the prompt.
     warning = danger.banner(line)
     if warning:
-        print(warning)
         # Drop a duplicate warning line the model may have produced anyway.
         stripped = [ln for ln in text.splitlines() if not ln.upper().lstrip().startswith("WARNING")]
         text = "\n".join(stripped).strip()
+    # Delimit only for a human at a terminal. Piped or redirected, explain still
+    # emits plain prose, so `cli-guru explain ... > notes.md` stays clean.
+    decorate = sys.stdout.isatty()
+    if decorate:
+        print(ui.open_rule(line))
+    if warning:
+        print(warning)
     print(text)
+    if decorate:
+        print(ui.rule())
     if source == "none":
         _err("no local man page found — answer is from general knowledge")
     return 0

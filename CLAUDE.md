@@ -13,7 +13,7 @@ Two modes, nothing else:
 
 ## Status — read this first
 
-**Working and complete.** cli-guru is implemented, tested and verified end to end. 112 tests pass with
+**Working and complete.** cli-guru is implemented, tested and verified end to end. 125 tests pass with
 no network and no ollama: `PYTHONPATH=src python3 -m unittest discover -s tests`.
 
 ### Naming
@@ -113,7 +113,7 @@ Roughly in the order they will bite.
 ### Running things
 
 ```bash
-PYTHONPATH=src python3 -m unittest discover -s tests        # 112 tests, no ollama needed
+PYTHONPATH=src python3 -m unittest discover -s tests        # 125 tests, no ollama needed
 PYTHONPATH=src python3 -m cli_guru.cli check               # is ollama reachable
 OLLAMA_HOST=http://192.168.178.96:11434 python3 bench/eval_ask.py  qwen2.5-coder:1.5b 5
 OLLAMA_HOST=http://192.168.178.96:11434 python3 bench/eval_hard.py qwen2.5-coder:1.5b 5
@@ -203,6 +203,7 @@ src/cli_guru/
   manpage.py        # base command, man fetch, section-aware truncation
   danger.py         # deterministic destructive-command detection, per segment
   sanitise.py       # model output -> one safe command line; rejects control chars
+  ui.py             # spinner + explain delimiters; writes ONLY to /dev/tty
   prompts.py        # the two system prompts
   install.py        # dotfile block: plan/diff/write/strip
   shell/            # cli-guru.bash, cli-guru.zsh, cli-guru.ps1  (canonical copies)
@@ -226,7 +227,10 @@ with zero dependencies: `python3 -m unittest discover -s tests`.
 
 cli-guru ask "<question>"        # prints ONE command line to stdout. Nothing else. No prose,
                               # no markdown fence, no trailing newline commentary.
-cli-guru explain "<command>"     # prints prose to stdout, man-page grounded
+cli-guru explain "<command>"     # prints prose to stdout, man-page grounded. At a terminal it is
+                              # fenced with `#` rules carrying the command, so the answer is
+                              # readable against whatever is already on screen; piped or
+                              # redirected the decoration is dropped and it stays plain prose
 cli-guru --check                 # verifies ollama is reachable and the model is pulled
 cli-guru --debug ask "..."       # as ask, but dumps prompt + model `thinking` to stderr
 ```
@@ -287,6 +291,14 @@ Non-obvious constraints:
   device is not seekable, so `r+` raises `io.UnsupportedOperation`, which subclasses `OSError` and
   therefore gets swallowed by the "no terminal" branch, silently disabling the prompt everywhere.
   When `/dev/tty` genuinely cannot be opened, say so on stderr and exit 1; never block.
+- **Progress must be shown on `/dev/tty` too, for the same reason.** A keypress that prints
+  nothing for several seconds is indistinguishable from a hang — reported from a real prompt on
+  `explain`, where the caret vanishes until the model answers. `ui.Activity` spins on the terminal
+  and erases the line on exit, including when the call fails, so the error lands on a clean row.
+  It must never write to stdout (that is the readline buffer) or stderr (the adapter files it away
+  until after the command exits). No terminal → no spinner and no error; a missing spinner is
+  cosmetic, a crashed keypress is not. `tests/test_cli.py` stubs it so a test run does not spin on
+  the developer's own terminal.
 - **Two bindings, never a heuristic.** `Ctrl-X Ctrl-A` = ask, `Ctrl-X Ctrl-H` = explain. Do not
   reintroduce auto-routing: "if the first word resolves via `command -v`, it's a command" was tested
   and misfires on most real input, because English requests start with verbs that are also coreutils

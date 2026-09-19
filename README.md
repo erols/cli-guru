@@ -646,7 +646,7 @@ git clone https://github.com/erols/cli-guru && cd cli-guru
 PYTHONPATH=src python3 -m unittest discover -s tests
 ```
 
-112 tests, no network and no ollama required — the model is stubbed with a local
+125 tests, no network and no ollama required — the model is stubbed with a local
 HTTP server, so the suite passes on a machine that has never installed ollama.
 
 ```
