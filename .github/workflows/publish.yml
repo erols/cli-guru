@@ -1,0 +1,94 @@
+name: publish
+
+# Publishing is gated on a GitHub Release, so cutting one is the deliberate act.
+# Trusted Publishing (OIDC) means no long-lived PyPI token exists to leak — the
+# first manual upload of this project 403'd twice on a token whose `pypi-`
+# prefix had been clipped by a browser copy, which is a problem that cannot
+# happen here.
+on:
+  release:
+    types: [published]
+
+jobs:
+  test:
+    name: tests (py${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # requires-python is >=3.9. Until now that was only checked by parsing
+        # the sources against the 3.9 grammar, which proves syntax and nothing
+        # about behaviour.
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      # No install step and no dependencies on purpose: the suite fakes ollama
+      # and needs no network, which is the whole reason it can run here.
+      - run: PYTHONPATH=src python -m unittest discover -s tests
+
+  build:
+    name: build and check
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build sdist and wheel
+        run: pipx run build
+
+      - name: Tag must match cli_guru.__version__
+        # A released version can never be re-uploaded, so a tag that disagrees
+        # with the version in the source is worth failing the release over
+        # rather than discovering on PyPI.
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          ver=$(python -c "import sys; sys.path.insert(0, 'src'); import cli_guru; print(cli_guru.__version__)")
+          echo "tag=$tag  __version__=$ver"
+          if [ "$tag" != "$ver" ]; then
+            echo "::error::Release tag '$tag' does not match cli_guru.__version__ '$ver'."
+            exit 1
+          fi
+          ls dist/ | grep -q "cli_guru-$ver-py3-none-any.whl"
+
+      - name: Wheel must contain the shell adapters
+        # install.py resolves these relative to __file__. If package-data ever
+        # breaks they vanish from the wheel while still working from a clone,
+        # so `cli-guru install` fails only for people who installed properly.
+        run: |
+          for f in cli-guru.bash cli-guru.zsh cli-guru.ps1; do
+            unzip -l dist/*.whl | grep -q "cli_guru/shell/$f" \
+              || { echo "::error::$f missing from the wheel"; exit 1; }
+          done
+          echo "all three adapters present"
+
+      - name: Metadata must be readable by current tooling
+        run: pipx run twine check dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # Configured on PyPI as the trusted publisher's environment. Add required
+    # reviewers to this environment in GitHub to gate uploads on approval.
+    environment: pypi
+    permissions:
+      # The only credential in this workflow: a short-lived OIDC token minted
+      # per run. Without this the action cannot identify itself to PyPI.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

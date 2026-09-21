@@ -105,12 +105,12 @@ Roughly in the order they will bite.
    from GNU. Now that strangers can install it, this is the top item.
 2. **Write a CHANGELOG.** Two releases exist and "what changed in 0.2.1?" is answerable only from
    git log. Add `CHANGELOG.md` before the next release and reference it from the README.
-3. **Trusted Publishing.** A GitHub Actions OIDC workflow removes the long-lived token from
-   releasing entirely — no paste, so no clipped prefix, and nothing to leak. Worth doing before the
-   release process gets used enough to be automated badly.
-4. **Add CI.** The suite needs no network and no ollama, so it runs anywhere. A matrix over
-   3.9–3.13 would also prove `requires-python >=3.9`, which is currently only checked by parsing
-   the sources against the 3.9 grammar.
+3. **Finish wiring Trusted Publishing.** `.github/workflows/publish.yml` exists and runs on a
+   published GitHub Release. **It does nothing until the publisher is registered on PyPI** — see
+   *Releasing* below. Until then, releases are still manual `twine upload`.
+4. **CI only runs on release.** The test matrix lives inside the publish workflow, so 3.9–3.13 is
+   proved at release time but not on push or PR. Splitting the `test` job into its own
+   `ci.yml` triggered on push would catch breakage when it happens rather than when you ship.
 5. **`bench/eval_explain.py` measures the wrong thing.** It still scores the *model's* ability to
    spot destructive commands, which `danger.py` took over. Rewrite it against `danger.py`'s rules
    or delete it; as it stands it reports on something the product does not rely on.
@@ -634,6 +634,37 @@ no longer exists — silently, because the adapter is loaded with `[ -f ... ] &&
 
 Once there are modules, the layout is `src/cli_guru/` with `cli.py`, `context.py`, `backend.py`,
 `manpage.py`, `prompts.py`. Keep the single file until it earns the split.
+
+### Releasing
+
+`.github/workflows/publish.yml` builds and uploads on a published GitHub Release, authenticating
+with a short-lived OIDC token. No PyPI token exists in the repo or in Actions secrets, which is the
+point: the first manual upload of this project 403'd twice on a token whose `pypi-` prefix a browser
+copy had clipped.
+
+**One-time setup on PyPI**, without which the workflow fails at the upload step — on
+<https://pypi.org/manage/project/cli-guru/settings/publishing/>:
+
+| Field | Value |
+|---|---|
+| Owner | `erols` |
+| Repository name | `cli-guru` |
+| Workflow name | `publish.yml` |
+| Environment name | `pypi` |
+
+The environment is optional to PyPI and worth setting anyway: adding required reviewers to a `pypi`
+environment in GitHub turns every upload into an approval step.
+
+**Cutting a release:**
+
+1. Bump `cli_guru.__version__` — nothing else, `pyproject.toml` reads it
+2. Commit and push
+3. Create a GitHub Release tagged `v<version>` (the leading `v` is stripped when compared)
+
+The workflow then runs the suite on 3.9–3.13, builds, and refuses to publish unless the tag matches
+`__version__` and all three shell adapters are present in the wheel. Both guards exist because the
+consequences are asymmetric: a released version number can never be reused, and adapters missing
+from the wheel break `cli-guru install` only for people who installed properly, never from a clone.
 
 ### `cli-guru install`
 
