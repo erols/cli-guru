@@ -776,7 +776,7 @@ No stack traces reach the user. A traceback in the readline buffer is the worst 
 **Beyond the suite.** `docs/container-testing.md` covers what a unit test cannot: keybindings in a
 shell with no rc block and no history, the ungrounded path on an image with no `man-db`, the silent
 no-op when sourced non-interactively, and the no-controlling-terminal fallback. A container is
-still Linux, so it says nothing about the macOS and Windows adapters — see the TODO.
+still Linux, so it says nothing about the macOS and Windows adapters — see `TODO.md`.
 
 `docs/model-benchmarks-2026-09.md` is a sweep of every pulled model through both harnesses, with
 the calibration against this file's numbers and what it contradicts. Re-run it when the model set

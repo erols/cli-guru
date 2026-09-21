@@ -130,7 +130,7 @@ lxc delete -f cg-test
 ## Not covered by this
 
 A container is Linux. It says nothing about the two adapters that have never run
-anywhere — see the TODO in `CLAUDE.md`:
+anywhere — see [`TODO.md`](../TODO.md):
 
 - **macOS** ships bash 3.2 and BSD userland, where `sed -i`, `date`, `stat` and
   `find` diverge from GNU. A Linux container cannot surface any of that.
