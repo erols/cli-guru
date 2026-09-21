@@ -139,9 +139,10 @@ names* reliably drops the `-p`.
 
 ## Explain-mode latency, measured separately
 
-The figures above are short requests. `explain` sends a truncated man page —
-about 6000 characters — with `num_predict=700`, which is a different workload.
-Measured directly on `tar -xzvf archive.tar.gz`, each model alone, three calls:
+The figures above are short requests. `explain` sends a man page with
+`num_predict=700`, which is a different workload. Measured directly on
+`tar -xzvf archive.tar.gz` — a 3920-character assembled prompt, under the 6000
+`max_man_chars` cap — each model alone, three calls:
 
 | Model | Cold | Warm | Hard score |
 |---|---:|---:|---:|
@@ -193,6 +194,8 @@ resident, alongside the first.
 
    Then `cli-guru check`, which verifies both models. The cost is holding a
    second model resident; see the next section, because it is not the disk size.
+   Note the measurement used `man tar` at 3920 characters; a longer page hits
+   the 6000-character cap and will be slower still.
 3. **Correct settled item 6 in `CLAUDE.md`** to say 1.5b wins the easy set and
    3b wins the hard set, rather than "both".
 4. **Do not pull `deepcoder:1.5b` for this tool**, and treat "can `think` be
