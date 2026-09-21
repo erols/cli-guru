@@ -684,6 +684,8 @@ behind them, including several cases where the obvious choice was wrong.
   for a recorded demo, and the ones that fail
 - [`docs/model-benchmarks-2026-09.md`](docs/model-benchmarks-2026-09.md) — eleven
   models through both harnesses, and why the fastest one is still the default
+- [`TODO.md`](TODO.md) — what is still owed, including the platforms that have
+  not been tested
 
 ## License
 

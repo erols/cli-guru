@@ -95,28 +95,13 @@ sections below.
 
 ### TODO
 
-Roughly in the order they will bite.
+**Open work lives in [`TODO.md`](TODO.md), not here.** One copy only — this file has already been
+wrong about its own contents once, and a task list duplicated across two documents drifts the same
+way the shell adapters would.
 
-1. **Verify macOS and Windows.** The zsh and PowerShell adapters have never run on a real box —
-   they are written to the same contract as bash and covered by the suite, but neither shell exists
-   in the dev sandbox. The README says so plainly, which is the honest position while it holds, not
-   a substitute for testing. macOS matters most: it ships **bash 3.2** (no `${var@Q}`, no
-   associative arrays) and **BSD userland**, where `sed -i`, `date`, `stat` and `find` all diverge
-   from GNU. Now that strangers can install it, this is the top item.
-2. **Write a CHANGELOG.** Two releases exist and "what changed in 0.2.1?" is answerable only from
-   git log. Add `CHANGELOG.md` before the next release and reference it from the README.
-3. **Finish wiring Trusted Publishing.** `.github/workflows/publish.yml` exists and runs on a
-   published GitHub Release. **It does nothing until the publisher is registered on PyPI** — see
-   *Releasing* below. Until then, releases are still manual `twine upload`.
-4. **CI only runs on release.** The test matrix lives inside the publish workflow, so 3.9–3.14 is
-   proved at release time but not on push or PR. Splitting the `test` job into its own
-   `ci.yml` triggered on push would catch breakage when it happens rather than when you ship.
-5. **`bench/eval_explain.py` measures the wrong thing.** It still scores the *model's* ability to
-   spot destructive commands, which `danger.py` took over. Rewrite it against `danger.py`'s rules
-   or delete it; as it stands it reports on something the product does not rely on.
-6. **Compound requests fail on every model tested** — "listening ports *with process names*"
-   reliably drops the `-p`. Possibly improvable by splitting the request into two calls; not
-   attempted, and it costs latency, so measure before adopting.
+This file is for decisions that are settled and the measurements behind them. `TODO.md` is for what
+is still owed. As of 2026-09-21 the top item is verifying the zsh and PowerShell adapters on real
+macOS and Windows machines, which have never run anywhere.
 
 ### Running things
 
