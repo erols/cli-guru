@@ -108,7 +108,7 @@ Roughly in the order they will bite.
 3. **Finish wiring Trusted Publishing.** `.github/workflows/publish.yml` exists and runs on a
    published GitHub Release. **It does nothing until the publisher is registered on PyPI** — see
    *Releasing* below. Until then, releases are still manual `twine upload`.
-4. **CI only runs on release.** The test matrix lives inside the publish workflow, so 3.9–3.13 is
+4. **CI only runs on release.** The test matrix lives inside the publish workflow, so 3.9–3.14 is
    proved at release time but not on push or PR. Splitting the `test` job into its own
    `ci.yml` triggered on push would catch breakage when it happens rather than when you ship.
 5. **`bench/eval_explain.py` measures the wrong thing.** It still scores the *model's* ability to
@@ -670,7 +670,7 @@ The version must not already exist on PyPI. As of 2026-09-21 the latest publishe
 which matches the repo exactly — every commit since that upload has been docs or CI, nothing under
 `src/`. The next release is therefore 0.2.3, and needs a code change to justify it.
 
-The workflow then runs the suite on 3.9–3.13, builds, and refuses to publish unless the tag matches
+The workflow then runs the suite on 3.9–3.14, builds, and refuses to publish unless the tag matches
 `__version__` and all three shell adapters are present in the wheel. Both guards exist because the
 consequences are asymmetric: a released version number can never be reused, and adapters missing
 from the wheel break `cli-guru install` only for people who installed properly, never from a clone.

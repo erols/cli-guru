@@ -23,7 +23,7 @@ jobs:
         # requires-python is >=3.9. Until now that was only checked by parsing
         # the sources against the 3.9 grammar, which proves syntax and nothing
         # about behaviour.
-        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
