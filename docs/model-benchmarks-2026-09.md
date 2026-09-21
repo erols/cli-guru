@@ -137,6 +137,31 @@ The incumbent's easy-set failure is the documented one, reproduced exactly:
 `ports+process` fails 0/5, because asking for listening ports *with process
 names* reliably drops the `-p`.
 
+## Explain-mode latency, measured separately
+
+The figures above are short requests. `explain` sends a truncated man page —
+about 6000 characters — with `num_predict=700`, which is a different workload.
+Measured directly on `tar -xzvf archive.tar.gz`, each model alone, three calls:
+
+| Model | Cold | Warm | Hard score |
+|---|---:|---:|---:|
+| `qwen2.5-coder:1.5b` | 5.0 s | **1.7 s** | 49–51% |
+| `qwen2.5-coder:7b` | 16.6 s | 3.3 s | 76% |
+| `TokenRhythm/neohorse-1:4b` | 14.6 s | 3.8 s | **83%** |
+| `ndavat/Nanbeige4.2-3B` | 32.0 s | 20.8 s | 80% |
+
+**The short-prompt latencies do not extrapolate, and the error is not small.**
+On the easy set Nanbeige is 10× slower than neohorse (9504 ms vs 969 ms); on a
+man page it is 5.5×. Meanwhile neohorse goes from 4.6× the incumbent to 2.2×.
+Prompt processing dominates once the prompt is large, which compresses the
+differences. Anything decided about `model_explain` has to be measured on a man
+page, not inferred from the table at the top of this file.
+
+For `model_explain`, `neohorse-1:4b` costs **2.1 s more than the incumbent per
+explain** and buys roughly 30 points of hard-set accuracy. Both sit far inside
+`timeout_explain = 45`. Nanbeige's 20.8 s warm is survivable but unpleasant, and
+its 32 s cold leaves little headroom on the first call after a break.
+
 ## Disk size is not the number that matters
 
 Resident memory runs far above the download size once context buffers are
@@ -157,11 +182,17 @@ resident, alongside the first.
 1. **Keep `qwen2.5-coder:1.5b` as the default for `ask`.** Nothing beat it on
    the axis that matters for a keypress. It is 4.6× faster than the most
    accurate model and the only one with a p90 comfortably under a second.
-2. **Consider `TokenRhythm/neohorse-1:4b` for `model_explain`.** Best accuracy
-   in the sweep, and explain's budget can absorb a second of latency where ask's
-   cannot. Before setting it, measure explain-mode latency directly — a man page
-   is a ~6000-character prompt, nothing like the short requests measured here,
-   so these numbers do not extrapolate.
+2. **Set `TokenRhythm/neohorse-1:4b` as `model_explain`** if you have the RAM.
+   Measured on a real man page it costs 3.8 s warm against the incumbent's 1.7 s
+   — 2.1 s more per explain, well inside the 45 s timeout — for the best accuracy
+   in the sweep. `ask` is untouched and stays at 210 ms.
+
+   ```toml
+   model_explain = "TokenRhythm/neohorse-1:4b-q4_k_m"
+   ```
+
+   Then `cli-guru check`, which verifies both models. The cost is holding a
+   second model resident; see the next section, because it is not the disk size.
 3. **Correct settled item 6 in `CLAUDE.md`** to say 1.5b wins the easy set and
    3b wins the hard set, rather than "both".
 4. **Do not pull `deepcoder:1.5b` for this tool**, and treat "can `think` be

@@ -1,0 +1,25 @@
+{
+  "hard_5rep": {
+    "qwen2.5-coder:1.5b": 51,
+    "qwen2.5-coder:3b": 67,
+    "TokenRhythm/neohorse-1:4b-q4_k_m": 83
+  },
+  "explain": {
+    "qwen2.5-coder:1.5b": {
+      "cold_s": 5.0,
+      "warm_s": 1.7
+    },
+    "qwen2.5-coder:7b": {
+      "cold_s": 16.6,
+      "warm_s": 3.3
+    },
+    "TokenRhythm/neohorse-1:4b-q4_k_m": {
+      "cold_s": 14.6,
+      "warm_s": 3.8
+    },
+    "ndavat/Nanbeige4.2-3B:latest": {
+      "cold_s": 32.0,
+      "warm_s": 20.8
+    }
+  }
+}
