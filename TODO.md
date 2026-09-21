@@ -94,6 +94,10 @@ sweep confirmed this is **not** a small-model problem: `gzip keep` and
 Possibly improvable by splitting the request into two calls. Not attempted, and
 it costs latency, so measure before adopting.
 
+## 7. Make animated cli gif with vhs, add to README.md
+
+## 8. Brush up README.md
+
 ---
 
 ## Recently closed
