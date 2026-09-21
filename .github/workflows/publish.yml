@@ -8,6 +8,10 @@ name: publish
 on:
   release:
     types: [published]
+  # Run tests, build and the wheel checks without publishing, so the pipeline
+  # can be proved before a release depends on it. A version number cannot be
+  # reused, so "try it and see" is not available at release time.
+  workflow_dispatch:
 
 jobs:
   test:
@@ -43,6 +47,7 @@ jobs:
         run: pipx run build
 
       - name: Tag must match cli_guru.__version__
+        if: github.event_name == 'release'
         # A released version can never be re-uploaded, so a tag that disagrees
         # with the version in the source is worth failing the release over
         # rather than discovering on PyPI.
@@ -78,6 +83,8 @@ jobs:
   publish:
     name: publish to PyPI
     needs: build
+    # Never on a manual run: dispatch proves the build, it does not ship.
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     # Configured on PyPI as the trusted publisher's environment. Add required
     # reviewers to this environment in GitHub to gate uploads on approval.

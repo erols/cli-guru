@@ -655,11 +655,20 @@ copy had clipped.
 The environment is optional to PyPI and worth setting anyway: adding required reviewers to a `pypi`
 environment in GitHub turns every upload into an approval step.
 
+**Proving the pipeline without releasing:** run the workflow manually
+(`workflow_dispatch`). Tests, build and the wheel checks all run; the publish job is skipped, as is
+the tag check, which has no tag to compare against. Worth doing before a release depends on it,
+because a version number cannot be reused and so "try it and see" is not available at release time.
+
 **Cutting a release:**
 
 1. Bump `cli_guru.__version__` — nothing else, `pyproject.toml` reads it
 2. Commit and push
 3. Create a GitHub Release tagged `v<version>` (the leading `v` is stripped when compared)
+
+The version must not already exist on PyPI. As of 2026-09-21 the latest published is **0.2.2**,
+which matches the repo exactly — every commit since that upload has been docs or CI, nothing under
+`src/`. The next release is therefore 0.2.3, and needs a code change to justify it.
 
 The workflow then runs the suite on 3.9–3.13, builds, and refuses to publish unless the tag matches
 `__version__` and all three shell adapters are present in the wheel. Both guards exist because the
