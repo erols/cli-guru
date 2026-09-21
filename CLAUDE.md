@@ -62,6 +62,9 @@ sections below.
 5. **Safety is deterministic Python** (`danger.py`), never the model. Models missed 12/15 destructive
    commands or raised 9/15 false alarms.
 6. **`qwen2.5-coder:1.5b` over `:3b`.** The 1.5B beats the 3B on both benchmarks, reproducibly.
+   **Contradicted on the hard set (2026-09-21):** measured twice, each model alone, 3b scored 67%
+   against 1.5b's 49–51%. 1.5b still wins the easy set and is twice as fast, so it stays the default
+   for ask — but "both benchmarks" is no longer accurate. See `docs/model-benchmarks-2026-09.md`.
 7. **Keys are `Ctrl-X Ctrl-A` / `Ctrl-X Ctrl-H`**, both unbound in a default shell. Never clobber.
 
 ### Distribution — settled facts
@@ -738,6 +741,11 @@ No stack traces reach the user. A traceback in the readline buffer is the worst 
 shell with no rc block and no history, the ungrounded path on an image with no `man-db`, the silent
 no-op when sourced non-interactively, and the no-controlling-terminal fallback. A container is
 still Linux, so it says nothing about the macOS and Windows adapters — see the TODO.
+
+`docs/model-benchmarks-2026-09.md` is a sweep of every pulled model through both harnesses, with
+the calibration against this file's numbers and what it contradicts. Re-run it when the model set
+changes; the method section explains why its hard-set figures are not comparable with the table in
+*Choosing a model*.
 
 `docs/demo-script.md` holds vetted questions and commands for a recorded demo, with the ones that
 fail and why. Note its first warning: answers depend on the directory, because the file listing is

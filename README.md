@@ -682,6 +682,8 @@ behind them, including several cases where the obvious choice was wrong.
   unit test cannot reach
 - [`docs/demo-script.md`](docs/demo-script.md) — vetted questions and commands
   for a recorded demo, and the ones that fail
+- [`docs/model-benchmarks-2026-09.md`](docs/model-benchmarks-2026-09.md) — eleven
+  models through both harnesses, and why the fastest one is still the default
 
 ## License
 

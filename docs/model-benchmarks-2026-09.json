@@ -1,0 +1,942 @@
+[
+  {
+    "model": "deepseek-coder:1.3b",
+    "gb": 0.78,
+    "params": "1B",
+    "quant": "Q4_0",
+    "easy": {
+      "pass": 38,
+      "passed": 23,
+      "runs": 60,
+      "median_ms": 1961,
+      "p90_ms": 2067,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "find size+time   distinct=5"
+        },
+        {
+          "result": "FLAKY",
+          "got": "3/5",
+          "case": "tar czf          distinct=5"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "sed -i           distinct=5"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "kill by port     distinct=2"
+        },
+        {
+          "result": "FLAKY",
+          "got": "1/5",
+          "case": "biggest files    distinct=5"
+        },
+        {
+          "result": "FLAKY",
+          "got": "4/5",
+          "case": "git log since    distinct=2"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "grep TODO py     distinct=1"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "chmod +x         distinct=4"
+        },
+        {
+          "result": "FLAKY",
+          "got": "2/5",
+          "case": "ports+process    distinct=5"
+        },
+        {
+          "result": "FLAKY",
+          "got": "3/5",
+          "case": "count py lines   distinct=5"
+        }
+      ],
+      "wall_s": 108.2
+    },
+    "hard": {
+      "pass": 27,
+      "passed": 12,
+      "runs": 45,
+      "median_ms": 1945,
+      "p90_ms": 2016,
+      "weak": [
+        {
+          "result": "FLAKY",
+          "got": "1/3",
+          "case": "ports+proc"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "find user+size"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "gzip keep"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "find excl .git"
+        },
+        {
+          "result": "FLAKY",
+          "got": "1/3",
+          "case": "chmod dirs only"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "git relative date"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "unique IPs"
+        },
+        {
+          "result": "FLAKY",
+          "got": "2/3",
+          "case": "pkill -f"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "top mem proc"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "literal $HOME"
+        },
+        {
+          "result": "FLAKY",
+          "got": "2/3",
+          "case": "total py size"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "tabs->spaces"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "largest dirs"
+        }
+      ],
+      "wall_s": 85.2
+    }
+  },
+  {
+    "model": "yi-coder:1.5b",
+    "gb": 0.87,
+    "params": "1.5B",
+    "quant": "Q4_0",
+    "easy": {
+      "pass": 73,
+      "passed": 44,
+      "runs": 60,
+      "median_ms": 1072,
+      "p90_ms": 1868,
+      "weak": [
+        {
+          "result": "FLAKY",
+          "got": "2/5",
+          "case": "find size+time   distinct=4"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "tar czf          distinct=4"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "chmod +x         distinct=2"
+        },
+        {
+          "result": "FLAKY",
+          "got": "2/5",
+          "case": "count py lines   distinct=4"
+        }
+      ],
+      "wall_s": 72.5
+    },
+    "hard": {
+      "pass": 47,
+      "passed": 21,
+      "runs": 45,
+      "median_ms": 1032,
+      "p90_ms": 1782,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "gzip keep"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "find excl .git"
+        },
+        {
+          "result": "FLAKY",
+          "got": "2/3",
+          "case": "uniq -c"
+        },
+        {
+          "result": "FLAKY",
+          "got": "2/3",
+          "case": "unique IPs"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "pkill -f"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "top mem proc"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "spaces in names"
+        },
+        {
+          "result": "FLAKY",
+          "got": "1/3",
+          "case": "literal $HOME"
+        },
+        {
+          "result": "FLAKY",
+          "got": "1/3",
+          "case": "total py size"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "largest dirs"
+        }
+      ],
+      "wall_s": 51.5
+    }
+  },
+  {
+    "model": "qwen2.5-coder:1.5b",
+    "gb": 0.99,
+    "params": "1.5B",
+    "quant": "Q4_K_M",
+    "easy": {
+      "pass": 92,
+      "passed": 55,
+      "runs": 60,
+      "median_ms": 210,
+      "p90_ms": 453,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "ports+process    distinct=1"
+        }
+      ],
+      "wall_s": 16.4
+    },
+    "hard": {
+      "pass": 49,
+      "passed": 22,
+      "runs": 45,
+      "median_ms": 333,
+      "p90_ms": 597,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "ports+proc"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "gzip keep"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "find excl .git"
+        },
+        {
+          "result": "FLAKY",
+          "got": "1/3",
+          "case": "git relative date"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "pkill -f"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "spaces in names"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "literal $HOME"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "largest dirs"
+        }
+      ],
+      "wall_s": 17.4
+    }
+  },
+  {
+    "model": "deepcoder:1.5b",
+    "gb": 1.12,
+    "params": "1.8B",
+    "quant": "Q4_K_M",
+    "easy": {
+      "pass": 0,
+      "passed": 0,
+      "runs": 60,
+      "median_ms": 2475,
+      "p90_ms": 2518,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "find size+time   distinct=1"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "tar czf          distinct=1"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "sed -i           distinct=1"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "kill by port     distinct=1"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "biggest files    distinct=1"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "delete pyc       distinct=1"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "git log since    distinct=1"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "du -sh           distinct=1"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "grep TODO py     distinct=1"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "chmod +x         distinct=1"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "ports+process    distinct=1"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "count py lines   distinct=1"
+        }
+      ],
+      "wall_s": 151.0
+    },
+    "hard": {
+      "pass": 0,
+      "passed": 0,
+      "runs": 45,
+      "median_ms": 2505,
+      "p90_ms": 2594,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "ports+proc"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "find user+size"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "gzip keep"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "find excl .git"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "chmod dirs only"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "git relative date"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "uniq -c"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "unique IPs"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "pkill -f"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "top mem proc"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "spaces in names"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "literal $HOME"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "total py size"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "tabs->spaces"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "largest dirs"
+        }
+      ],
+      "wall_s": 113.6
+    }
+  },
+  {
+    "model": "qwen3:1.7b",
+    "gb": 1.36,
+    "params": "2.0B",
+    "quant": "Q4_K_M",
+    "easy": {
+      "pass": 80,
+      "passed": 48,
+      "runs": 60,
+      "median_ms": 384,
+      "p90_ms": 671,
+      "weak": [
+        {
+          "result": "FLAKY",
+          "got": "1/5",
+          "case": "sed -i           distinct=2"
+        },
+        {
+          "result": "FLAKY",
+          "got": "4/5",
+          "case": "kill by port     distinct=2"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "delete pyc       distinct=1"
+        },
+        {
+          "result": "FLAKY",
+          "got": "3/5",
+          "case": "ports+process    distinct=4"
+        }
+      ],
+      "wall_s": 24.3
+    },
+    "hard": {
+      "pass": 38,
+      "passed": 17,
+      "runs": 45,
+      "median_ms": 380,
+      "p90_ms": 710,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "ports+proc"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "find user+size"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "gzip keep"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "find excl .git"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "git relative date"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "unique IPs"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "top mem proc"
+        },
+        {
+          "result": "FLAKY",
+          "got": "2/3",
+          "case": "literal $HOME"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "tabs->spaces"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "largest dirs"
+        }
+      ],
+      "wall_s": 17.2
+    }
+  },
+  {
+    "model": "qwen2.5-coder:3b",
+    "gb": 1.93,
+    "params": "3.1B",
+    "quant": "Q4_K_M",
+    "easy": {
+      "pass": 88,
+      "passed": 53,
+      "runs": 60,
+      "median_ms": 463,
+      "p90_ms": 1023,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "grep TODO py     distinct=1"
+        },
+        {
+          "result": "FLAKY",
+          "got": "4/5",
+          "case": "ports+process    distinct=3"
+        },
+        {
+          "result": "FLAKY",
+          "got": "4/5",
+          "case": "count py lines   distinct=2"
+        }
+      ],
+      "wall_s": 34.3
+    },
+    "hard": {
+      "pass": 67,
+      "passed": 30,
+      "runs": 45,
+      "median_ms": 621,
+      "p90_ms": 993,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "gzip keep"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "find excl .git"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "chmod dirs only"
+        },
+        {
+          "result": "FLAKY",
+          "got": "2/3",
+          "case": "git relative date"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "top mem proc"
+        },
+        {
+          "result": "FLAKY",
+          "got": "1/3",
+          "case": "literal $HOME"
+        }
+      ],
+      "wall_s": 30.6
+    }
+  },
+  {
+    "model": "ndavat/Nanbeige4.2-3B:latest",
+    "gb": 2.57,
+    "params": "4.2B",
+    "quant": "Q4_K_M",
+    "easy": {
+      "pass": 98,
+      "passed": 59,
+      "runs": 60,
+      "median_ms": 9504,
+      "p90_ms": 9679,
+      "weak": [
+        {
+          "result": "FLAKY",
+          "got": "4/5",
+          "case": "count py lines   distinct=5"
+        }
+      ],
+      "wall_s": 443.4
+    },
+    "hard": {
+      "pass": 80,
+      "passed": 36,
+      "runs": 45,
+      "median_ms": 6946,
+      "p90_ms": 9814,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "gzip keep"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "find excl .git"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "uniq -c"
+        }
+      ],
+      "wall_s": 288.4
+    }
+  },
+  {
+    "model": "TokenRhythm/neohorse-1:4b-q4_k_m",
+    "gb": 2.71,
+    "params": "4.2B",
+    "quant": "Q4_K_M",
+    "easy": {
+      "pass": 100,
+      "passed": 60,
+      "runs": 60,
+      "median_ms": 969,
+      "p90_ms": 2576,
+      "weak": [],
+      "wall_s": 83.8
+    },
+    "hard": {
+      "pass": 80,
+      "passed": 36,
+      "runs": 45,
+      "median_ms": 2274,
+      "p90_ms": 4383,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "find excl .git"
+        },
+        {
+          "result": "FLAKY",
+          "got": "2/3",
+          "case": "unique IPs"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "pkill -f"
+        },
+        {
+          "result": "FLAKY",
+          "got": "2/3",
+          "case": "total py size"
+        },
+        {
+          "result": "FLAKY",
+          "got": "2/3",
+          "case": "largest dirs"
+        }
+      ],
+      "wall_s": 106.9
+    }
+  },
+  {
+    "model": "nemotron-3-nano:4b",
+    "gb": 2.84,
+    "params": "4.0B",
+    "quant": "Q4_K_M",
+    "easy": {
+      "pass": 77,
+      "passed": 46,
+      "runs": 60,
+      "median_ms": 761,
+      "p90_ms": 2547,
+      "weak": [
+        {
+          "result": "FLAKY",
+          "got": "1/5",
+          "case": "git log since    distinct=3"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "chmod +x         distinct=1"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "ports+process    distinct=1"
+        }
+      ],
+      "wall_s": 65.1
+    },
+    "hard": {
+      "pass": 58,
+      "passed": 26,
+      "runs": 45,
+      "median_ms": 1119,
+      "p90_ms": 2980,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "ports+proc"
+        },
+        {
+          "result": "FLAKY",
+          "got": "1/3",
+          "case": "gzip keep"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "find excl .git"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "git relative date"
+        },
+        {
+          "result": "FLAKY",
+          "got": "2/3",
+          "case": "uniq -c"
+        },
+        {
+          "result": "FLAKY",
+          "got": "2/3",
+          "case": "spaces in names"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "literal $HOME"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "largest dirs"
+        }
+      ],
+      "wall_s": 65.8
+    }
+  },
+  {
+    "model": "SparkLLM/Spark-X2.5-1.7B:latest",
+    "gb": 3.42,
+    "params": "1.7B",
+    "quant": "BF16",
+    "easy": {
+      "pass": 87,
+      "passed": 52,
+      "runs": 60,
+      "median_ms": 871,
+      "p90_ms": 1463,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/5",
+          "case": "tar czf          distinct=1"
+        },
+        {
+          "result": "FLAKY",
+          "got": "4/5",
+          "case": "du -sh           distinct=2"
+        },
+        {
+          "result": "FLAKY",
+          "got": "3/5",
+          "case": "count py lines   distinct=3"
+        }
+      ],
+      "wall_s": 59.2
+    },
+    "hard": {
+      "pass": 58,
+      "passed": 26,
+      "runs": 45,
+      "median_ms": 1069,
+      "p90_ms": 2332,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "find user+size"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "gzip keep"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "find excl .git"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "git relative date"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "literal $HOME"
+        },
+        {
+          "result": "FLAKY",
+          "got": "2/3",
+          "case": "total py size"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "largest dirs"
+        }
+      ],
+      "wall_s": 58.6
+    }
+  },
+  {
+    "model": "qwen2.5-coder:7b",
+    "gb": 4.68,
+    "params": "7.6B",
+    "quant": "Q4_K_M",
+    "easy": {
+      "pass": 95,
+      "passed": 57,
+      "runs": 60,
+      "median_ms": 788,
+      "p90_ms": 1253,
+      "weak": [
+        {
+          "result": "FLAKY",
+          "got": "2/5",
+          "case": "grep TODO py     distinct=2"
+        }
+      ],
+      "wall_s": 56.9
+    },
+    "hard": {
+      "pass": 76,
+      "passed": 34,
+      "runs": 45,
+      "median_ms": 1156,
+      "p90_ms": 1714,
+      "weak": [
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "gzip keep"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "uniq -c"
+        },
+        {
+          "result": "FAIL",
+          "got": "0/3",
+          "case": "top mem proc"
+        },
+        {
+          "result": "FLAKY",
+          "got": "1/3",
+          "case": "literal $HOME"
+        }
+      ],
+      "wall_s": 55.7
+    }
+  }
+]
