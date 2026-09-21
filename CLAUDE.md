@@ -61,10 +61,15 @@ sections below.
 4. **No tools list in the context.** Costs a small model ~50 points; it forces `rg` into everything.
 5. **Safety is deterministic Python** (`danger.py`), never the model. Models missed 12/15 destructive
    commands or raised 9/15 false alarms.
-6. **`qwen2.5-coder:1.5b` over `:3b`.** The 1.5B beats the 3B on both benchmarks, reproducibly.
-   **Contradicted on the hard set (2026-09-21):** measured twice, each model alone, 3b scored 67%
-   against 1.5b's 49–51%. 1.5b still wins the easy set and is twice as fast, so it stays the default
-   for ask — but "both benchmarks" is no longer accurate. See `docs/model-benchmarks-2026-09.md`.
+6. **`qwen2.5-coder:1.5b` is the default for ask, on latency and the easy set — not on both sets.**
+   Re-measured 2026-09-21 across eleven models, each alone: 1.5b wins easy (92% vs 3b's 88%) at
+   210 ms median against 463 ms, and that is what a keypress is judged on. **3b wins the hard set,
+   67% against 49–51%**, reproduced at two repeat counts. The earlier claim that 1.5B "beats the 3B
+   on both benchmarks" was wrong, or stopped being true; the published pair (1.5b 64% / 3b 46%) is
+   close to the transpose of what now measures, and there is no evidence here to say which.
+   `TokenRhythm/neohorse-1:4b` is the accuracy leader (100% easy, 83% hard) but 4.6x the latency,
+   so it belongs in `model_explain`, not as the ask default. Full data and method:
+   `docs/model-benchmarks-2026-09.md`.
 7. **Keys are `Ctrl-X Ctrl-A` / `Ctrl-X Ctrl-H`**, both unbound in a default shell. Never clobber.
 
 ### Distribution — settled facts
@@ -421,6 +426,12 @@ hard set and two different question sets. Parameter count is not a proxy for qua
 likewise dominated.
 
 7b remains the accuracy option: +15 points on the hard set for 3x the RAM and 5x the latency.
+
+**This table is 2026-09-18 and covers four models.** A 2026-09-21 sweep of all eleven pulled models
+is in `docs/model-benchmarks-2026-09.md`, including two that beat everything here on accuracy and a
+measured contradiction of settled item 6. Its hard-set figures use 3 repeats where this table used
+2, so the two are not directly comparable — the report says so at the top. Prefer the report for
+model choice; keep this table for the reasoning about parameter count not predicting quality.
 
 **A caveat on the small model.** 1.5b writes chattier explanations and emits markdown despite the
 prompt forbidding it. `sanitise.prose` strips bold, backticks, headings and bullets for that reason —
